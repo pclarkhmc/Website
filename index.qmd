@@ -1,0 +1,14 @@
+---
+title: "E155 Portfolio"
+image: images/headshot.jpeg
+about:
+    template: jolla
+    links:
+        - icon: linkedin
+          text: LinkedIn
+          href: https://www.linkedin.com/in/pierce-clark949/
+        - icon: github
+          text: Github
+          href: https://github.com/pclarkhmc
+---
+Pierce Clark is an engineering student at Harvey Mudd College who builds and verifies digital hardware. He's designed a pipelined RISC-V processor in SystemVerilog, written certification tests for the RISC-V Sdtrig debug extension as a Clay-Wolkin Research Fellow, and worked on space-qualified networking hardware at TRL11.

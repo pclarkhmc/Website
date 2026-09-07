@@ -1,0 +1,10 @@
+---
+title: "Hello Quarto"
+description: "Welcome to my Quarto portfolio"
+author: "Pierce"
+date: "9/7/26"
+categories:
+  - reflection
+  - labreport
+draft: false
+---
