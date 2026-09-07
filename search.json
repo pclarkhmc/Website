@@ -1,0 +1,16 @@
+[
+  {
+    "objectID": "blog.html",
+    "href": "blog.html",
+    "title": "E155 Blog",
+    "section": "",
+    "text": "Hello Quarto\n\n\nWelcome to my Quarto portfolio\n\n\n\n\n\nSep 7, 2026\n\n\nPierce\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "E155 Portfolio",
+    "section": "",
+    "text": "Pierce Clark is an engineering student at Harvey Mudd College who builds and verifies digital hardware. He’s designed a pipelined RISC-V processor in SystemVerilog, written certification tests for the RISC-V Sdtrig debug extension as a Clay-Wolkin Research Fellow, and worked on space-qualified networking hardware at TRL11."
+  }
+]
