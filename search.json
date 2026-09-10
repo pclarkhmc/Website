@@ -1,12 +1,5 @@
 [
   {
-    "objectID": "blog.html",
-    "href": "blog.html",
-    "title": "E155 Blog",
-    "section": "",
-    "text": "Hello Quarto\n\n\nWelcome to my Quarto portfolio\n\n\n\n\n\nSep 7, 2026\n\n\nPierce\n\n\n\n\n\nNo matching items"
-  },
-  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "E155 Portfolio",
@@ -14,10 +7,66 @@
     "text": "Pierce Clark is an engineering student at Harvey Mudd College who builds and verifies digital hardware. He’s designed a pipelined RISC-V processor in SystemVerilog, written certification tests for the RISC-V Sdtrig debug extension as a Clay-Wolkin Research Fellow, and worked on space-qualified networking hardware at TRL11."
   },
   {
+    "objectID": "blog.html",
+    "href": "blog.html",
+    "title": "E155 Blog",
+    "section": "",
+    "text": "Hello Quarto\n\n\nWelcome to my Quarto portfolio\n\n\n\n\n\nSep 7, 2026\n\n\nPierce\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "labs.html",
+    "href": "labs.html",
+    "title": "155 Lab",
+    "section": "",
+    "text": "Lab 1: FPGA and MCU Setup and Testing\n\n\n\n\n\n\n\n\n\n\n\nNo matching items"
+  },
+  {
     "objectID": "labs/lab1/lab1.html",
     "href": "labs/lab1/lab1.html",
-    "title": "E155 Portfolio",
+    "title": "Lab 1: FPGA and MCU Setup and Testing",
     "section": "",
-    "text": "Lab one is in progress… come back later…"
+    "text": "In this lab, a design was implemented on the Lattice iCE40 UP5K to practice basic FPGA programming. The on-board 48 MHz high-speed oscillator was divided down with a counter to blink an on-board LED at ~2.4 Hz. Four on-board switches drove a seven segment display and two additional on-board LEDs."
+  },
+  {
+    "objectID": "labs/lab1/lab1.html#introduction",
+    "href": "labs/lab1/lab1.html#introduction",
+    "title": "Lab 1: FPGA and MCU Setup and Testing",
+    "section": "",
+    "text": "In this lab, a design was implemented on the Lattice iCE40 UP5K to practice basic FPGA programming. The on-board 48 MHz high-speed oscillator was divided down with a counter to blink an on-board LED at ~2.4 Hz. Four on-board switches drove a seven segment display and two additional on-board LEDs."
+  },
+  {
+    "objectID": "labs/lab1/lab1.html#design-and-testing-methodology",
+    "href": "labs/lab1/lab1.html#design-and-testing-methodology",
+    "title": "Lab 1: FPGA and MCU Setup and Testing",
+    "section": "Design and Testing Methodology",
+    "text": "Design and Testing Methodology\nThe on-board high-speed oscillator, HSOSC, from the iCE40 UltraPlus primitive library generated a 48 MHz clock. A counter divided that clock to drive one on-board LED, and combinational logic on the switch bits drove the other two.\nThe seven segment display module took 4 on-board switches as input and used case logic to select the segment pattern for the matching hexadecimal character.\nTestbenches were written for every module, sweeping all inputs where that was feasible."
+  },
+  {
+    "objectID": "labs/lab1/lab1.html#technical-documentation",
+    "href": "labs/lab1/lab1.html#technical-documentation",
+    "title": "Lab 1: FPGA and MCU Setup and Testing",
+    "section": "Technical Documentation",
+    "text": "Technical Documentation\nThe source code for the project can be found in the associated Github repository.\n\nBlock Diagram\n\n\nShow block diagram\n\n\n\n\nFigure 1: Block diagram of the Verilog design.\n\n\n\nThe block diagram in Figure 1 shows the overall architecture of the design. The top level module includes 3 submodules which contain the HSOSC, counter divider, and display logic.\n\n\nSchematic\n\n\nShow schematic\n\n\n\n\nFigure 2: Schematic of the physical circuit.\n\n\n\nFigure 2 shows the physical layout. The display is powered from the 3.3 V pin, and the FPGA pins ground each segment to light it. 1 kΩ series resistors limit the on-board LED currents, and 150 Ω resistors limit the seven-segment current, keeping both within the FPGA I/O and display ratings.\n\n\nClock Divider Calculations\nThe HSOSC module runs at its default rate of \\(f_{clk} = 48\\text{ MHz}\\). A counter counts to \\(N = 20{,}000{,}000\\) and resets, and the LED is on whenever the count is greater than \\(\\frac12 N\\), so one full on/off cycle takes \\(N\\) clock cycles:\n\\[\nf_{blink} = \\frac{f_{clk}}{N} = \\frac{48 \\times 10^6\\text{ Hz}}{20 \\times 10^6} = 2.4\\text{ Hz}\n\\]\nThat matches the rate specified in the lab guide and the rate observed on the board.\n\n\nSeven Segment Circuit Calculations\n\n\n\nFigure 3: Seven segment display circuit.\n\n\n\n\n\nFigure 4: Forward current versus forward voltage for the seven segment display, taken from the HDSP-511A datasheet.\n\n\nEach segment of the display is an LED with an absolute maximum current rating of 30 mA. The circuit was designed for a target current of \\(I = 8\\text{ mA}\\).\nEach segment of the display is driven from the 3.3 V pin, \\(V_{cc} = 3.3\\text{ V}\\), and has a diode forward voltage of \\(V_f = 1.8\\text{ V}\\) at the target current, as shown in Figure 4. The remaining voltage is dropped across the current-limiting series resistor:\n\\[\nV_R = V_{cc} - V_f = 3.3\\text{ V} - 1.8\\text{ V} = 1.5\\text{ V}\n\\]\nApplying Ohm’s law across the resistor gives the required resistance:\n\\[\nR = \\frac{V_R}{I} = \\frac{1.5\\text{ V}}{8\\text{ mA}} = 187.5\\,\\Omega\n\\]\nA standard \\(150\\,\\Omega\\) resistor was used in the final design. It draws \\(1.5\\text{ V} / 150\\,\\Omega = 10\\text{ mA}\\) per segment, which is slightly above the 8 mA target but still well under the 30 mA maximum rating."
+  },
+  {
+    "objectID": "labs/lab1/lab1.html#results-and-discussion",
+    "href": "labs/lab1/lab1.html#results-and-discussion",
+    "title": "Lab 1: FPGA and MCU Setup and Testing",
+    "section": "Results and Discussion",
+    "text": "Results and Discussion\n\nTestbench Simulation\n\n\nShow testbench simulation\n\n\n\n\nFigure 5: A QuestaSim simulation of the top level module, showing the switch inputs, the seven segment outputs, the internal oscillator, and the counter driving the LED.\n\n\n\nFigure 5 shows the QuestaSim results for the top level testbench. Each switch input produced the expected seven segment pattern, and the LED output followed the counter, staying high for the top half of each cycle. The counter in the testbench was given a cycle length of ten clock cycles to demonstrate the reset functionality."
+  },
+  {
+    "objectID": "labs/lab1/lab1.html#conclusion",
+    "href": "labs/lab1/lab1.html#conclusion",
+    "title": "Lab 1: FPGA and MCU Setup and Testing",
+    "section": "Conclusion",
+    "text": "Conclusion\nThe design implemented all three LED behaviors. The on-board high-speed oscillator blinked the on-board LED, and the seven segment display showed all 16 outputs correctly. This lab took at least 20 hours."
+  },
+  {
+    "objectID": "labs/lab1/lab1.html#lab-1-ai-prototype",
+    "href": "labs/lab1/lab1.html#lab-1-ai-prototype",
+    "title": "Lab 1: FPGA and MCU Setup and Testing",
+    "section": "Lab 1 AI Prototype",
+    "text": "Lab 1 AI Prototype\nAs part of this lab, an AI coding assistant was prompted to generate a SystemVerilog implementation of a similar circuit. The model used was Claude Opus 5.\n\n\nShow prompt and generated code\n\nPrompt:\n\nWrite SystemVerilog HDL to leverage the internal high speed oscillator in the Lattice UP5K FPGA and blink an LED at 2 Hz. Take full advantage of SystemVerilog syntax, for example, using logic instead of wire and reg.\n\nResponse:\nThe UP5K’s internal high-frequency oscillator is instantiated as the HSOSC primitive. It exposes a CLKHF_DIV parameter that divides its nominal 48 MHz output by 1, 2, 4, or 8; \"0b01\" selects divide-by-2, yielding a 24 MHz reference clock. A free-running counter then toggles the LED every CLK_FREQ_HZ / (BLINK_FREQ_HZ * 2) cycles, so the LED’s toggle rate produces a visible 2 Hz blink (one full on/off period every 0.5 s). The module uses logic throughout instead of wire/reg, always_ff to make the sequential intent explicit, and localparam with $clog2 to size the counter automatically instead of hard-coding a bit width.\nmodule top (\n    output logic led\n);\n\n    // Internal oscillator: 48 MHz nominal, divided by 2 -&gt; 24 MHz\n    logic clk_hf;\n\n    HSOSC #(\n        .CLKHF_DIV(\"0b01\")\n    ) hf_osc_inst (\n        .CLKHFPU (1'b1),\n        .CLKHFEN (1'b1),\n        .CLKHF   (clk_hf)\n    );\n\n    // Toggle the LED once every (CLK_FREQ_HZ / (BLINK_FREQ_HZ * 2)) cycles\n    // so that a full on/off period elapses at BLINK_FREQ_HZ.\n    localparam int unsigned CLK_FREQ_HZ   = 24_000_000;\n    localparam int unsigned BLINK_FREQ_HZ = 2;\n    localparam int unsigned TOGGLE_COUNT  = CLK_FREQ_HZ / (BLINK_FREQ_HZ * 2);\n    localparam int unsigned COUNTER_WIDTH = $clog2(TOGGLE_COUNT);\n\n    logic [COUNTER_WIDTH-1:0] count = '0;\n    logic                     led_reg = 1'b0;\n\n    always_ff @(posedge clk_hf) begin\n        if (count == TOGGLE_COUNT - 1) begin\n            count   &lt;= '0;\n            led_reg &lt;= ~led_reg;\n        end else begin\n            count &lt;= count + 1'b1;\n        end\n    end\n\n    assign led = led_reg;\n\nendmodule\n\nOverall, the generated code was correct in its structure and module instantiation. The counter math was correct. The AI used correct SystemVerilog idioms like always_ff for the counter and stuck to logic throughout."
   }
 ]
