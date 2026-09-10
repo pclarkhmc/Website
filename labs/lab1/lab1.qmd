@@ -77,15 +77,13 @@ A standard $150\,\Omega$ resistor was used in the final design. It draws $1.5\te
 ### Testbench Simulation
 
 <details>
-<summary>Show testbench simulations</summary>
+<summary>Show testbench simulation</summary>
 
-![Figure 5: A QuestaSim simulation sweeping all 16 inputs to the seven segment logic.](images/SevenSegWaveforms.jpg)
-
-![Figure 6: A QuestaSim simulation of the counter divider and the LED signal it drives.](images/CounterWavesNEW.png)
+![Figure 5: A QuestaSim simulation of the top level module, showing the switch inputs, the seven segment outputs, the internal oscillator, and the counter driving the LED.](images/TopLevelWaves.png)
 
 </details>
 
-Figures 5 and 6 show the QuestaSim results. The seven segment testbench swept all 16 input combinations, and each one produced the expected segment pattern. In the counter testbench the LED output followed the counter, staying high for the top half of each cycle. The counter in the testbench was given a cycle length of ten clock cycles to demonstrate the reset functionality.
+Figure 5 shows the QuestaSim results for the top level testbench. Each switch input produced the expected seven segment pattern, and the LED output followed the counter, staying high for the top half of each cycle. The counter in the testbench was given a cycle length of ten clock cycles to demonstrate the reset functionality.
 
 ## Conclusion
 
