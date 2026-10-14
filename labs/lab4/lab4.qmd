@@ -1,0 +1,212 @@
+---
+title: "Lab 4: Digital Audio"
+---
+
+## Introduction
+
+In lab 4, the STM32L432KC microcontroller was programmed to play music through an 8-ohm speaker. The speaker was driven by a LM386 audio amplifier. Musical notes were store as a list of pitches (Hz) and durations (ms), which the microcontroller interpreted to program timer peripherals in order to create a wave of the same pitch. 
+
+This lab developed skills such as reading datasheets and creating register-level drivers for microcontrollers.
+
+## Design and Testing Methodology
+
+The TIM16 timer peripheral was configured to create a PWM and overflows were counted to keep track of the notes duration.
+
+System clock was set to MSI. In the APB2 bus, the prescaler was set to 3, which gave a input frequency of 1MHz to the timer.
+
+The timer was set to PWM mode 1, which sets Channel 1 to active as long as $TIM16_{CNT}<TIM16_{CCR1}$, else it is inactive.
+
+The microcontroller read the overflow flag to keep track of the amount of clock overflows, then changes to the next note after a amount of overflows calculated from the notes duration.
+
+The GPIO pin 6 was connected  to TIM16 by writing registers MODER and AFRL. GPIO pin 6 (PA6) was externally connected to the LM386 audio amplifier. I used GPIO bank A on this design since it had the most external pins on the development board.
+
+Defines were used to encode important addresses from the datasheet like the start of the GPIOA bank addresses. Structs were written to organize the register from the reference manual.
+
+The design was tested using oscilloscopes to measure the frequency of the output by playing the Für Elise score.
+
+## Technical Documentation
+
+The source code for the project can be found in the associated [Github repository](https://github.com/pclarkhmc/e155).
+
+### Schematic
+
+![Schematic of the physical circuit, showing the MCU GPIO output driving the LM386 amplifier and the 8 Ω speaker.](<images/Lab4 Schematic.drawio.png>){#fig-schematic}
+
+Circuit schematic used was from Texas Instruments LM386 Low Voltage Audio Power Amplifier datasheet
+
+### Frequency and Duration Calculations
+
+**Timer clock and prescaler calculations**
+
+$$
+f_{timer} = \frac{f_{clk}}{PSC + 1} = \frac{4 \text{Mhz}}{3 + 1} = 1\text{Mhz}
+$$
+
+**Auto-reload value for a note of frequency $f_{note}$**
+
+$$
+ARR = \frac{f_{timer}}{f_{note}} - 1
+$$
+
+The **final output** frequency of the timers signal is:
+
+$$
+f_{out} = \frac{f_{timer}}{ARR + 1}
+$$
+
+A note lasting $t$ milliseconds last for $n$ overflows, and the **actual duration** played is
+
+$$
+n = \frac{f_{note} * t}{1000}
+$$
+
+$$
+t_{out} = \frac{n * (ARR + 1)}{f_{timer}}
+$$
+
+#### Example Calculations
+
+Both examples use a 250 ms note.
+
+**Example 1: 220 Hz**
+
+$$
+ARR = \frac{1000000\text{ Hz}}{220\text{ Hz}} - 1 = 4545 - 1 = 4544
+$$
+
+$$
+f_{out} = \frac{1000000\text{ Hz}}{4544 + 1} = 220.02\text{ Hz}
+$$
+
+$$
+n = \frac{220\text{ Hz} * 250\text{ ms}}{1000} = 55
+$$
+
+$$
+t_{out} = \frac{55 * 4545}{1000000\text{ Hz}} = 0.249975\text{ s} = 249.975\text{ ms}
+$$
+
+**Example 2: 1000 Hz**
+
+$$
+ARR = \frac{1000000\text{ Hz}}{1000\text{ Hz}} - 1 = 999
+$$
+
+$$
+f_{out} = \frac{1000000\text{ Hz}}{999 + 1} = 1000\text{ Hz}
+$$
+
+$$
+n = \frac{1000\text{ Hz} * 250\text{ ms}}{1000} = 250
+$$
+
+$$
+t_{out} = \frac{250 * 1000}{1000000\text{ Hz}} = 0.25\text{ s} = 250\text{ ms}
+$$
+
+Both example notes show that the system can create 220 Hz and 1000 Hz pitches within 1% accuracy.
+
+#### Absolute Max/Min Frequency and Duration
+
+**Minimum frequency**
+
+TIM16 is a 16 bit timer, so the largest ARR is 65535. The lowest frequency is
+
+$$
+f_{min} = \frac{1000000\text{ Hz}}{65535 + 1} = 15.26\text{ Hz}
+$$
+
+**Maximum frequency**
+
+The fastest we can make the timer output is with a cycle 2 ticks long, since we need one half to be on for the PWM signal to output.
+
+$$
+ARR + 1 = 2
+$$
+
+$$
+f_{max} = \frac{1000000\text{ Hz}}{1 + 1} = 500000\text{ Hz} = 500\text{ kHz}
+$$
+
+**Minimum duration**
+
+The minimum duration for a note is $N = 1$ overflows
+
+$$
+t_{min} = \frac{1000}{f_{note}}\text{ ms}
+$$
+
+At the highest frequency, 500 kHz:
+
+$$
+t_{min} = \frac{1000}{500000}\text{ ms} = 0.002\text{ ms} = 2\text{ µs}
+$$
+
+Practically however, the minimum is 1 ms because durations are stored as integer milliseconds.
+
+**Maximum duration**
+
+$n$ is computed with uint32_t, so $f_{note} * t$ must stay below 4294967295. The longest note is possible at the lowest frequency, 16 Hz:
+
+$$
+t_{max} = \frac{4294967295}{16}\text{ ms} = 268435455\text{ ms} = 74.6\text{ hours}
+$$
+
+The timer is able to play fur elise all within 1% accuracy, since nearly all the notes fall close withing the range of 200-1000 Hz. This was additionally proven by calculating the error for every note in the song in a spreadsheet.(https://docs.google.com/spreadsheets/d/1Ons0ZR9uOKoXykoLUrtP-t-9wVeZpt0yylUZN51Lkxk/edit?usp=sharing)
+
+## Results and Discussion
+
+All requirements for the lab were met. The songs were successfully played through the speaker circuit.
+
+### Shortcomings
+
+In terms of shortcomings, the reference manual was intitially overwhelming, so much control+f was used to find features of interest. 
+
+## Conclusion
+
+In conclusion, in Lab 4, a STM32L432KC was used to drive a 8 ohm speaker. The code was able to play notes accurately within 1% of the desired pitch and duration. The song "The Hall of the Mountain King" was also play, although it was translated into notes by AI because I am not a music major.
+
+In total, I spent ~15 hours on this lab.
+
+## Lab 4 AI Prototype
+
+### Model
+
+Claude Opus 5.5 Medium Effort
+
+### Prompt
+```
+What timers should I use on the STM32L432KC to generate frequencies ranging from 220Hz to 1kHz? What’s the best choice of timer if I want to easily connect it to a GPIO pin? What formulae are relevant, and what registers need to be set to configure them properly?
+```
+
+### Process
+
+The AI chose the TIM 2 to use because its the simplest and also has 32 bits. The process of the AI was fairly similair to my own, the setup code was more compact however.
+
+### Results
+
+```
+void tone_init(void) {
+    RCC->AHB2ENR  |= RCC_AHB2ENR_GPIOAEN;
+    RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+
+    GPIOA->MODER  = (GPIOA->MODER & ~(3u << 0)) | (2u << 0);        // PA0 -> AF
+    GPIOA->AFR[0] = (GPIOA->AFR[0] & ~(0xFu << 0)) | (1u << 0);     // AF1
+
+    TIM2->PSC   = 79;                                   // 80 MHz / 80 = 1 MHz tick
+    TIM2->CCMR1 = (6u << TIM_CCMR1_OC1M_Pos) | TIM_CCMR1_OC1PE;  // PWM1 + preload
+    TIM2->CCER |= TIM_CCER_CC1E;
+    TIM2->CR1  |= TIM_CR1_ARPE;
+}
+
+void tone_set(uint32_t freq_hz) {
+    if (freq_hz == 0) { TIM2->CCR1 = 0; return; }       // rest = silence
+    uint32_t arr = 1000000u / freq_hz - 1;
+    TIM2->ARR  = arr;
+    TIM2->CCR1 = (arr + 1) / 2;                         // 50% duty
+    TIM2->EGR  = TIM_EGR_UG;                            // apply now
+    TIM2->CR1 |= TIM_CR1_CEN;
+}
+```
+
+
