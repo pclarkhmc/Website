@@ -1,5 +1,5 @@
 ---
-title: "E155 Portfolio"
+title: "Pierce Clark"
 image: images/headshot.jpeg
 about:
     template: jolla
@@ -11,4 +11,17 @@ about:
           text: Github
           href: https://github.com/pclarkhmc
 ---
-Pierce Clark is an engineering student at Harvey Mudd College who builds and verifies digital hardware. He's designed a pipelined RISC-V processor in SystemVerilog, written certification tests for the RISC-V Sdtrig debug extension as a Clay-Wolkin Research Fellow, and worked on space-qualified networking hardware at TRL11.
+I'm an engineering student at Harvey Mudd College. I like working where hardware and software meet: designing digital logic, figuring out how processors work, and writing the low-level code that brings a board to life.
+
+## What I Study
+
+- **Computer architecture.** How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a 5-stage pipelined processor and optimized it for speed and area.
+- **Digital design and verification.** Writing SystemVerilog and proving it works, using simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I wrote certification tests for the RISC-V Sdtrig debug extension.
+- **Embedded systems.** Programming microcontrollers at the register level and connecting them to real peripherals. In Microprocessor-based Systems (E155), I've worked with an iCE40 FPGA and an STM32L432KC microcontroller, building keypad scanners, digital audio, and an SPI temperature sensor served over Wi-Fi.
+- **Hardware in industry.** At TRL11, I worked on space-qualified networking hardware.
+
+## On This Site
+
+- [Labs](labs.qmd): write-ups for my E155 labs, covering design, testing, and results.
+- [Projects](projects.qmd): larger projects, including my [pipelined RISC-V processor](projects/soc-final/soc-final.qmd).
+- [Blog](blog.qmd): reflections and updates along the way.
