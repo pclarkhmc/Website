@@ -1,5 +1,5 @@
 ---
-title: "155 Lab"
+title: "155 Labs"
 listing:
   contents: labs
   sort: "date desc"
