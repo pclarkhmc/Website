@@ -21,6 +21,8 @@ I'm an engineering student at Harvey Mudd College. I like working where hardware
 
 How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a [5-stage pipelined processor](projects/soc-final/soc-final.qmd) and optimized it for speed and area. I've also worked on [RISC-V's debug trigger extension](posts/sdtrig-certification-tests.qmd), which adds hardware breakpoints and watchpoints to the architecture.
 
+![A stylized die render of our 5-stage RV32IM core. Each block maps to a module in the RTL.](images/riscv-core-die.svg){fig-alt="Die-shot style render of a RISC-V RV32IM 5-stage pipelined processor with labeled blocks: IFU, branch predictor, CSR, decode, register file, ALU, multiplier, hazard unit, and LSU."}
+
 ### Design & Verification
 
 Writing SystemVerilog and proving it works with simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I [write certification tests for RISC-V Sdtrig](posts/sdtrig-certification-tests.qmd), and I've found and reported bugs in a RISC-V reference simulator along the way.
