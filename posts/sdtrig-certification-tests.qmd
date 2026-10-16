@@ -1,0 +1,55 @@
+---
+title: "Writing Certification Tests for RISC-V Sdtrig"
+description: "What I've learned building architectural certification tests for the RISC-V debug trigger extension as a Clay-Wolkin Research Fellow."
+author: "Pierce Clark"
+date: 2026-10-16
+categories:
+  - risc-v
+  - verification
+---
+
+Over the past several months, I've been working as a Clay-Wolkin Research Fellow on the [RISC-V Architectural Certification Tests](https://github.com/riscv/riscv-arch-test) (ACTs). The ACTs are a set of assembly-language tests that certify whether a processor faithfully implements the RISC-V specification. My focus has been **Sdtrig**, the debug trigger extension. This post covers what Sdtrig is, how a certification test goes from a sentence in the spec to an executable test, and a few things I've learned along the way.
+
+## What Sdtrig Is
+
+Sdtrig defines a trigger module: a set of hardware triggers that watch the processor and take an action when a condition is met. Software selects a trigger with the `tselect` CSR and configures it through `tdata1`, `tdata2`, and `tdata3`. A trigger can watch for:
+
+- an instruction executing at a particular address,
+- a load or store to a particular address, or of a particular data value,
+- a number of instructions retiring (`icount`), or
+- an interrupt or exception.
+
+When a trigger fires, it can raise a breakpoint exception or put the hart into Debug Mode. This is how hardware breakpoints and watchpoints in a debugger like GDB work.
+
+Sdtrig is hard to test because so much of it is optional. Most trigger fields are WARL (write any, read legal), so an implementation can choose which trigger types, match modes, and sizes it supports. A certification test has to exercise everything an implementation claims to support, while accepting any legal choice it makes.
+
+## From Spec to Test
+
+My work has followed the pipeline the ACTs use for every extension.
+
+**1. Normative rules.** Before you can test a spec, you have to identify each requirement in it. I [tagged the normative rules](https://github.com/riscv/riscv-debug-spec/pull/1220) in the Sdtrig chapters of the RISC-V Debug Specification. I then wrote the [normative rule mapping](https://github.com/riscv/riscv-arch-test/pull/1981) that links each rule to the test plan, so every requirement is traceable to the test that checks it. My first contribution to the project was a smaller version of the same thing, a [rule mapping for ExceptionsF](https://github.com/riscv/riscv-arch-test/pull/1648).
+
+**2. Configuration parameters.** Since so much of Sdtrig is implementation-defined, the tests need to know what a given processor supports. I [added Sdtrig parameters](https://github.com/riscv/riscv-unified-db/pull/2069) to the RISC-V Unified Database (UDB). They describe which trigger types each trigger supports and which values each WARL field accepts. The test generators read these parameters to decide which tests to emit.
+
+**3. Coverpoints and test generators.** A coverpoint describes one behavior that must be exercised, and a test generator produces the assembly that exercises it. My [largest PR](https://github.com/riscv/riscv-arch-test/pull/1836) (about 5,000 lines across 28 files) added the Sdtrig test generators for machine, supervisor, and user mode. Since the Sail reference model doesn't support Sdtrig, it also added a [Whisper](https://github.com/tenstorrent/whisper) configuration that uses [Spike](https://github.com/riscv-software-src/riscv-isa-sim) as the reference instead.
+
+Since then I've been extending coverage and keeping the pieces consistent. I [unified the mcontrol6 coverpoints, generator, and test plan](https://github.com/riscv/riscv-arch-test/pull/2744) so they all describe the same set of tests. I've also opened PRs for trigger tests on [atomic instructions and instruction counting](https://github.com/riscv/riscv-arch-test/pull/2413) and on [cache-management operations](https://github.com/riscv/riscv-arch-test/pull/2830), and [split each section of the plan into its own generator](https://github.com/riscv/riscv-arch-test/pull/2679).
+
+## Bugs Found Along the Way
+
+Certification tests are only useful if they catch real disagreements with the spec, and the Sdtrig tests turned up two in Whisper, Tenstorrent's RISC-V reference simulator:
+
+- **Wrong `mtval` on a trigger breakpoint.** A store-address trigger set at `0x80008000` raised a breakpoint, but Whisper wrote `0x80008001` to `mtval` instead of the faulting address. I [reported it](https://github.com/tenstorrent/whisper/issues/32), and after I sent the exact config and trace, the maintainer reproduced and fixed it.
+- **Data triggers ignored load-reserved instructions.** A data-match trigger fired on ordinary loads like `ld`, but not when `lr.d` loaded the same value. Spike took the breakpoint, but Whisper didn't. I [reported it](https://github.com/tenstorrent/whisper/issues/55) with side-by-side traces from both simulators, and it was fixed.
+
+## What I've Learned
+
+**Reference models disagree, and so do people reading the spec.** Neither simulator is ground truth. While unifying the mcontrol6 tests, I found that Spike converts the negated match types to plain "equal." That means Spike can't serve as the reference for those match types, so those tests stay disabled until there's a reference that can. Much of the work is deciding what the spec actually requires, then citing the rule when you file a bug.
+
+**A passing test might not be testing anything.** In one case, the Sdtrig CSR access tests were guarded by `#ifdef UDB_tdata1_AVAILABLE`, but UDB defines the uppercase name `UDB_TDATA1_AVAILABLE`. No guard ever matched, so the access tests [silently emitted no CSR accesses at all](https://github.com/riscv/riscv-arch-test/pull/2835). Now I check that a test actually emits the instructions it claims to before I trust a green result.
+
+**Make bugs easy to reproduce.** My first Whisper report included a trace from a different run than the ELF I attached, which cost the maintainer time. The simulator's developers also don't use the ACT build system, so a `make` target means nothing to them. Now every report I file includes the exact simulator command line, the config, and matching traces from both simulators.
+
+**Infrastructure is part of the job.** Before I could verify my own tests, I had to [repair the Whisper/Spike configs](https://github.com/riscv/riscv-arch-test/pull/2414) after a UDB schema change left them unable to build. Contributing to a large shared repository means fixing things that are broken for everyone, not just your own corner.
+
+This work ties directly into my coursework. In System-on-Chip Design, I used the same ACT framework to verify the [pipelined RISC-V processor](../projects/soc-final/soc-final.qmd) my partner and I built.

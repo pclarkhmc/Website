@@ -1,13 +1,9 @@
 ---
 title: "Pierce Clark"
-subtitle: "Engineering · Harvey Mudd College"
 image: images/headshot.jpeg
 toc: false
-page-layout: full
 about:
-    template: trestles
-    image-shape: round
-    image-width: 14em
+    template: jolla
     links:
         - icon: linkedin
           text: LinkedIn
@@ -21,48 +17,22 @@ I'm an engineering student at Harvey Mudd College. I like working where hardware
 
 ## What I Study
 
-::: {.grid .interest-grid}
+### Computer Architecture
 
-::: {.g-col-12 .g-col-lg-6 .interest-card}
-#### Computer Architecture
+How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a [5-stage pipelined processor](projects/soc-final/soc-final.qmd) and optimized it for speed and area. I've also worked on [RISC-V's debug trigger extension](posts/sdtrig-certification-tests.qmd), which adds hardware breakpoints and watchpoints to the architecture.
 
-How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a 5-stage pipelined processor and optimized it for speed and area.
-:::
+### Design & Verification
 
-::: {.g-col-12 .g-col-lg-6 .interest-card}
-#### Design & Verification
+Writing SystemVerilog and proving it works with simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I [write certification tests for RISC-V Sdtrig](posts/sdtrig-certification-tests.qmd), and I've found and reported bugs in a RISC-V reference simulator along the way.
 
-Writing SystemVerilog and proving it works with simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I wrote certification tests for the RISC-V Sdtrig debug extension.
-:::
+### Embedded Systems
 
-::: {.g-col-12 .g-col-lg-6 .interest-card}
-#### Embedded Systems
+Register-level microcontroller programming and real peripherals. In Microprocessor-based Systems (E155), I've used an iCE40 FPGA and an STM32L432KC to build a [keypad scanner](labs/lab3/lab3.qmd), [digital audio](labs/lab4/lab4.qmd), and a [Wi-Fi temperature monitor](labs/lab6/lab6.qmd) over SPI.
 
-Register-level microcontroller programming and real peripherals. In E155, I've used an iCE40 FPGA and an STM32L432KC to build keypad scanners, digital audio, and a Wi-Fi temperature monitor.
-:::
-
-::: {.g-col-12 .g-col-lg-6 .interest-card}
-#### Industry Hardware
+### Industry Hardware
 
 At TRL11, I worked on space-qualified networking hardware.
-:::
 
-:::
+## On This Site
 
-## Explore
-
-::: {.grid .explore-grid}
-
-::: {.g-col-12 .g-col-md-4}
-[**Labs**<br><span class="explore-desc">E155 lab write-ups: design, testing, and results</span>](labs.qmd){.explore-link}
-:::
-
-::: {.g-col-12 .g-col-md-4}
-[**Projects**<br><span class="explore-desc">Larger builds, like a pipelined RISC-V processor</span>](projects.qmd){.explore-link}
-:::
-
-::: {.g-col-12 .g-col-md-4}
-[**Blog**<br><span class="explore-desc">Reflections and updates along the way</span>](blog.qmd){.explore-link}
-:::
-
-:::
+[Labs](labs.qmd) has write-ups for my E155 labs, [Projects](projects.qmd) has larger builds, and the [Blog](blog.qmd) has posts about my work.
