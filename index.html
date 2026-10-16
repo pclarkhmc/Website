@@ -77,7 +77,7 @@ ul.task-list li input[type="checkbox"] {
 <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="nav-fixed quarto-light">
+<body class="nav-fixed fullcontent quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -121,15 +121,7 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-  <ul>
-  <li><a href="#what-i-study" id="toc-what-i-study" class="nav-link active" data-scroll-target="#what-i-study">What I Study</a></li>
-  <li><a href="#on-this-site" id="toc-on-this-site" class="nav-link" data-scroll-target="#on-this-site">On This Site</a></li>
-  </ul>
-</nav>
-    </div>
+    
 <!-- main -->
 <div class="quarto-about-jolla">
   <img src="images/headshot.jpeg" class="about-image
@@ -141,24 +133,29 @@ ul.task-list li input[type="checkbox"] {
 <div class="quarto-title-meta">
   </div>
 </header><main class="content" id="quarto-document-content">
-
 <p>I’m an engineering student at Harvey Mudd College. I like working where hardware and software meet: designing digital logic, figuring out how processors work, and writing the low-level code that brings a board to life.</p>
 <section id="what-i-study" class="level2">
 <h2 data-anchor-id="what-i-study">What I Study</h2>
-<ul>
-<li><strong>Computer architecture.</strong> How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a 5-stage pipelined processor and optimized it for speed and area.</li>
-<li><strong>Digital design and verification.</strong> Writing SystemVerilog and proving it works, using simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I wrote certification tests for the RISC-V Sdtrig debug extension.</li>
-<li><strong>Embedded systems.</strong> Programming microcontrollers at the register level and connecting them to real peripherals. In Microprocessor-based Systems (E155), I’ve worked with an iCE40 FPGA and an STM32L432KC microcontroller, building keypad scanners, digital audio, and an SPI temperature sensor served over Wi-Fi.</li>
-<li><strong>Hardware in industry.</strong> At TRL11, I worked on space-qualified networking hardware.</li>
-</ul>
+<section id="computer-architecture" class="level3">
+<h3 data-anchor-id="computer-architecture">Computer Architecture</h3>
+<p>How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a <a href="./projects/soc-final/soc-final.html">5-stage pipelined processor</a> and optimized it for speed and area. I’ve also worked on <a href="./posts/sdtrig-certification-tests.html">RISC-V’s debug trigger extension</a>, which adds hardware breakpoints and watchpoints to the architecture.</p>
+</section>
+<section id="design-verification" class="level3">
+<h3 data-anchor-id="design-verification">Design &amp; Verification</h3>
+<p>Writing SystemVerilog and proving it works with simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I <a href="./posts/sdtrig-certification-tests.html">write certification tests for RISC-V Sdtrig</a>, and I’ve found and reported bugs in a RISC-V reference simulator along the way.</p>
+</section>
+<section id="embedded-systems" class="level3">
+<h3 data-anchor-id="embedded-systems">Embedded Systems</h3>
+<p>Register-level microcontroller programming and real peripherals. In Microprocessor-based Systems (E155), I’ve used an iCE40 FPGA and an STM32L432KC to build a <a href="./labs/lab3/lab3.html">keypad scanner</a>, <a href="./labs/lab4/lab4.html">digital audio</a>, and a <a href="./labs/lab6/lab6.html">Wi-Fi temperature monitor</a> over SPI.</p>
+</section>
+<section id="industry-hardware" class="level3">
+<h3 data-anchor-id="industry-hardware">Industry Hardware</h3>
+<p>At TRL11, I worked on space-qualified networking hardware.</p>
+</section>
 </section>
 <section id="on-this-site" class="level2">
 <h2 data-anchor-id="on-this-site">On This Site</h2>
-<ul>
-<li><a href="./labs.html">Labs</a>: write-ups for my E155 labs, covering design, testing, and results.</li>
-<li><a href="./projects.html">Projects</a>: larger projects, including my <a href="./projects/soc-final/soc-final.html">pipelined RISC-V processor</a>.</li>
-<li><a href="./blog.html">Blog</a>: reflections and updates along the way.</li>
-</ul>
+<p><a href="./labs.html">Labs</a> has write-ups for my E155 labs, <a href="./projects.html">Projects</a> has larger builds, and the <a href="./blog.html">Blog</a> has posts about my work.</p>
 
 
 </section>
@@ -171,7 +168,7 @@ ul.task-list li input[type="checkbox"] {
   </a>
   <a href="https://github.com/pclarkhmc" class="about-link" rel="" target="">
     <i class="bi bi-github"></i>
-     <span class="about-link-text">Github</span>
+     <span class="about-link-text">GitHub</span>
   </a>
 </div>
 </div>

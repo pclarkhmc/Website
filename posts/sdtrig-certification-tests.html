@@ -6,11 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Pierce">
-<meta name="dcterms.date" content="2026-09-07">
-<meta name="description" content="Welcome to my Quarto portfolio">
+<meta name="author" content="Pierce Clark">
+<meta name="dcterms.date" content="2026-10-16">
+<meta name="description" content="What I’ve learned building architectural certification tests for the RISC-V debug trigger extension as a Clay-Wolkin Research Fellow.">
 
-<title>Hello Quarto – Pierce Clark</title>
+<title>Writing Certification Tests for RISC-V Sdtrig – Pierce Clark</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -125,24 +125,33 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-sdtrig-is" id="toc-what-sdtrig-is" class="nav-link active" data-scroll-target="#what-sdtrig-is">What Sdtrig Is</a></li>
+  <li><a href="#from-spec-to-test" id="toc-from-spec-to-test" class="nav-link" data-scroll-target="#from-spec-to-test">From Spec to Test</a></li>
+  <li><a href="#bugs-found-along-the-way" id="toc-bugs-found-along-the-way" class="nav-link" data-scroll-target="#bugs-found-along-the-way">Bugs Found Along the Way</a></li>
+  <li><a href="#what-ive-learned" id="toc-what-ive-learned" class="nav-link" data-scroll-target="#what-ive-learned">What I’ve Learned</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Hello Quarto</h1>
+<h1 class="title">Writing Certification Tests for RISC-V Sdtrig</h1>
   <div class="quarto-categories">
-    <div class="quarto-category">reflection</div>
-    <div class="quarto-category">labreport</div>
+    <div class="quarto-category">risc-v</div>
+    <div class="quarto-category">verification</div>
   </div>
   </div>
 
 <div>
   <div class="description">
-    Welcome to my Quarto portfolio
+    What I’ve learned building architectural certification tests for the RISC-V debug trigger extension as a Clay-Wolkin Research Fellow.
   </div>
 </div>
 
@@ -152,14 +161,14 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Author</div>
     <div class="quarto-title-meta-contents">
-             <p>Pierce </p>
+             <p>Pierce Clark </p>
           </div>
   </div>
     
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 7, 2026</p>
+      <p class="date">October 16, 2026</p>
     </div>
   </div>
   
@@ -171,8 +180,45 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<p>Over the past several months, I’ve been working as a Clay-Wolkin Research Fellow on the <a href="https://github.com/riscv/riscv-arch-test">RISC-V Architectural Certification Tests</a> (ACTs). The ACTs are a set of assembly-language tests that certify whether a processor faithfully implements the RISC-V specification. My focus has been <strong>Sdtrig</strong>, the debug trigger extension. This post covers what Sdtrig is, how a certification test goes from a sentence in the spec to an executable test, and a few things I’ve learned along the way.</p>
+<section id="what-sdtrig-is" class="level2">
+<h2 class="anchored" data-anchor-id="what-sdtrig-is">What Sdtrig Is</h2>
+<p>Sdtrig defines a trigger module: a set of hardware triggers that watch the processor and take an action when a condition is met. Software selects a trigger with the <code>tselect</code> CSR and configures it through <code>tdata1</code>, <code>tdata2</code>, and <code>tdata3</code>. A trigger can watch for:</p>
+<ul>
+<li>an instruction executing at a particular address,</li>
+<li>a load or store to a particular address, or of a particular data value,</li>
+<li>a number of instructions retiring (<code>icount</code>), or</li>
+<li>an interrupt or exception.</li>
+</ul>
+<p>When a trigger fires, it can raise a breakpoint exception or put the hart into Debug Mode. This is how hardware breakpoints and watchpoints in a debugger like GDB work.</p>
+<p>Sdtrig is hard to test because so much of it is optional. Most trigger fields are WARL (write any, read legal), so an implementation can choose which trigger types, match modes, and sizes it supports. A certification test has to exercise everything an implementation claims to support, while accepting any legal choice it makes.</p>
+</section>
+<section id="from-spec-to-test" class="level2">
+<h2 class="anchored" data-anchor-id="from-spec-to-test">From Spec to Test</h2>
+<p>My work has followed the pipeline the ACTs use for every extension.</p>
+<p><strong>1. Normative rules.</strong> Before you can test a spec, you have to identify each requirement in it. I <a href="https://github.com/riscv/riscv-debug-spec/pull/1220">tagged the normative rules</a> in the Sdtrig chapters of the RISC-V Debug Specification. I then wrote the <a href="https://github.com/riscv/riscv-arch-test/pull/1981">normative rule mapping</a> that links each rule to the test plan, so every requirement is traceable to the test that checks it. My first contribution to the project was a smaller version of the same thing, a <a href="https://github.com/riscv/riscv-arch-test/pull/1648">rule mapping for ExceptionsF</a>.</p>
+<p><strong>2. Configuration parameters.</strong> Since so much of Sdtrig is implementation-defined, the tests need to know what a given processor supports. I <a href="https://github.com/riscv/riscv-unified-db/pull/2069">added Sdtrig parameters</a> to the RISC-V Unified Database (UDB). They describe which trigger types each trigger supports and which values each WARL field accepts. The test generators read these parameters to decide which tests to emit.</p>
+<p><strong>3. Coverpoints and test generators.</strong> A coverpoint describes one behavior that must be exercised, and a test generator produces the assembly that exercises it. My <a href="https://github.com/riscv/riscv-arch-test/pull/1836">largest PR</a> (about 5,000 lines across 28 files) added the Sdtrig test generators for machine, supervisor, and user mode. Since the Sail reference model doesn’t support Sdtrig, it also added a <a href="https://github.com/tenstorrent/whisper">Whisper</a> configuration that uses <a href="https://github.com/riscv-software-src/riscv-isa-sim">Spike</a> as the reference instead.</p>
+<p>Since then I’ve been extending coverage and keeping the pieces consistent. I <a href="https://github.com/riscv/riscv-arch-test/pull/2744">unified the mcontrol6 coverpoints, generator, and test plan</a> so they all describe the same set of tests. I’ve also opened PRs for trigger tests on <a href="https://github.com/riscv/riscv-arch-test/pull/2413">atomic instructions and instruction counting</a> and on <a href="https://github.com/riscv/riscv-arch-test/pull/2830">cache-management operations</a>, and <a href="https://github.com/riscv/riscv-arch-test/pull/2679">split each section of the plan into its own generator</a>.</p>
+</section>
+<section id="bugs-found-along-the-way" class="level2">
+<h2 class="anchored" data-anchor-id="bugs-found-along-the-way">Bugs Found Along the Way</h2>
+<p>Certification tests are only useful if they catch real disagreements with the spec, and the Sdtrig tests turned up two in Whisper, Tenstorrent’s RISC-V reference simulator:</p>
+<ul>
+<li><strong>Wrong <code>mtval</code> on a trigger breakpoint.</strong> A store-address trigger set at <code>0x80008000</code> raised a breakpoint, but Whisper wrote <code>0x80008001</code> to <code>mtval</code> instead of the faulting address. I <a href="https://github.com/tenstorrent/whisper/issues/32">reported it</a>, and after I sent the exact config and trace, the maintainer reproduced and fixed it.</li>
+<li><strong>Data triggers ignored load-reserved instructions.</strong> A data-match trigger fired on ordinary loads like <code>ld</code>, but not when <code>lr.d</code> loaded the same value. Spike took the breakpoint, but Whisper didn’t. I <a href="https://github.com/tenstorrent/whisper/issues/55">reported it</a> with side-by-side traces from both simulators, and it was fixed.</li>
+</ul>
+</section>
+<section id="what-ive-learned" class="level2">
+<h2 class="anchored" data-anchor-id="what-ive-learned">What I’ve Learned</h2>
+<p><strong>Reference models disagree, and so do people reading the spec.</strong> Neither simulator is ground truth. While unifying the mcontrol6 tests, I found that Spike converts the negated match types to plain “equal.” That means Spike can’t serve as the reference for those match types, so those tests stay disabled until there’s a reference that can. Much of the work is deciding what the spec actually requires, then citing the rule when you file a bug.</p>
+<p><strong>A passing test might not be testing anything.</strong> In one case, the Sdtrig CSR access tests were guarded by <code>#ifdef UDB_tdata1_AVAILABLE</code>, but UDB defines the uppercase name <code>UDB_TDATA1_AVAILABLE</code>. No guard ever matched, so the access tests <a href="https://github.com/riscv/riscv-arch-test/pull/2835">silently emitted no CSR accesses at all</a>. Now I check that a test actually emits the instructions it claims to before I trust a green result.</p>
+<p><strong>Make bugs easy to reproduce.</strong> My first Whisper report included a trace from a different run than the ELF I attached, which cost the maintainer time. The simulator’s developers also don’t use the ACT build system, so a <code>make</code> target means nothing to them. Now every report I file includes the exact simulator command line, the config, and matching traces from both simulators.</p>
+<p><strong>Infrastructure is part of the job.</strong> Before I could verify my own tests, I had to <a href="https://github.com/riscv/riscv-arch-test/pull/2414">repair the Whisper/Spike configs</a> after a UDB schema change left them unable to build. Contributing to a large shared repository means fixing things that are broken for everyone, not just your own corner.</p>
+<p>This work ties directly into my coursework. In System-on-Chip Design, I used the same ACT framework to verify the <a href="../projects/soc-final/soc-final.html">pipelined RISC-V processor</a> my partner and I built.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
