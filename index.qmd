@@ -1,27 +1,68 @@
 ---
 title: "Pierce Clark"
+subtitle: "Engineering · Harvey Mudd College"
 image: images/headshot.jpeg
+toc: false
+page-layout: full
 about:
-    template: jolla
+    template: trestles
+    image-shape: round
+    image-width: 14em
     links:
         - icon: linkedin
           text: LinkedIn
           href: https://www.linkedin.com/in/pierce-clark949/
         - icon: github
-          text: Github
+          text: GitHub
           href: https://github.com/pclarkhmc
 ---
+
 I'm an engineering student at Harvey Mudd College. I like working where hardware and software meet: designing digital logic, figuring out how processors work, and writing the low-level code that brings a board to life.
 
 ## What I Study
 
-- **Computer architecture.** How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a 5-stage pipelined processor and optimized it for speed and area.
-- **Digital design and verification.** Writing SystemVerilog and proving it works, using simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I wrote certification tests for the RISC-V Sdtrig debug extension.
-- **Embedded systems.** Programming microcontrollers at the register level and connecting them to real peripherals. In Microprocessor-based Systems (E155), I've worked with an iCE40 FPGA and an STM32L432KC microcontroller, building keypad scanners, digital audio, and an SPI temperature sensor served over Wi-Fi.
-- **Hardware in industry.** At TRL11, I worked on space-qualified networking hardware.
+::: {.grid .interest-grid}
 
-## On This Site
+::: {.g-col-12 .g-col-lg-6 .interest-card}
+#### Computer Architecture
 
-- [Labs](labs.qmd): write-ups for my E155 labs, covering design, testing, and results.
-- [Projects](projects.qmd): larger projects, including my [pipelined RISC-V processor](projects/soc-final/soc-final.qmd).
-- [Blog](blog.qmd): reflections and updates along the way.
+How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a 5-stage pipelined processor and optimized it for speed and area.
+:::
+
+::: {.g-col-12 .g-col-lg-6 .interest-card}
+#### Design & Verification
+
+Writing SystemVerilog and proving it works with simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I wrote certification tests for the RISC-V Sdtrig debug extension.
+:::
+
+::: {.g-col-12 .g-col-lg-6 .interest-card}
+#### Embedded Systems
+
+Register-level microcontroller programming and real peripherals. In E155, I've used an iCE40 FPGA and an STM32L432KC to build keypad scanners, digital audio, and a Wi-Fi temperature monitor.
+:::
+
+::: {.g-col-12 .g-col-lg-6 .interest-card}
+#### Industry Hardware
+
+At TRL11, I worked on space-qualified networking hardware.
+:::
+
+:::
+
+## Explore
+
+::: {.grid .explore-grid}
+
+::: {.g-col-12 .g-col-md-4}
+[**Labs**<br><span class="explore-desc">E155 lab write-ups: design, testing, and results</span>](labs.qmd){.explore-link}
+:::
+
+::: {.g-col-12 .g-col-md-4}
+[**Projects**<br><span class="explore-desc">Larger builds, like a pipelined RISC-V processor</span>](projects.qmd){.explore-link}
+:::
+
+::: {.g-col-12 .g-col-md-4}
+[**Blog**<br><span class="explore-desc">Reflections and updates along the way</span>](blog.qmd){.explore-link}
+:::
+
+:::
