@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Pierce Clark and Max Conine">
+<meta name="dcterms.date" content="2026-04-30">
+<meta name="description" content="A 5-stage RV32IM pipelined processor with a 3-stage multiplier and static branch prediction, synthesized on SKY130 for a 10x figure-of-merit improvement over a single-cycle baseline.">
+
+<title>Pipelined RISC-V Processor – Pierce Clark</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-55617497126496852ff9f5a59253c640.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Pierce Clark</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../blog.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../labs.html"> 
+<span class="menu-text">Labs</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../projects.html"> 
+<span class="menu-text">Projects</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#microarchitecture" id="toc-microarchitecture" class="nav-link" data-scroll-target="#microarchitecture">Microarchitecture</a>
+  <ul class="collapse">
+  <li><a href="#implemented-extensions" id="toc-implemented-extensions" class="nav-link" data-scroll-target="#implemented-extensions">Implemented Extensions</a></li>
+  </ul></li>
+  <li><a href="#figure-of-merit" id="toc-figure-of-merit" class="nav-link" data-scroll-target="#figure-of-merit">Figure of Merit</a></li>
+  <li><a href="#processor-optimizations" id="toc-processor-optimizations" class="nav-link" data-scroll-target="#processor-optimizations">Processor Optimizations</a>
+  <ul class="collapse">
+  <li><a href="#pipelining" id="toc-pipelining" class="nav-link" data-scroll-target="#pipelining">Pipelining</a></li>
+  <li><a href="#multiply-unit" id="toc-multiply-unit" class="nav-link" data-scroll-target="#multiply-unit">Multiply Unit</a></li>
+  <li><a href="#branch-logic" id="toc-branch-logic" class="nav-link" data-scroll-target="#branch-logic">Branch Logic</a></li>
+  <li><a href="#optimized-synthesis" id="toc-optimized-synthesis" class="nav-link" data-scroll-target="#optimized-synthesis">Optimized Synthesis</a></li>
+  <li><a href="#minimizing-area" id="toc-minimizing-area" class="nav-link" data-scroll-target="#minimizing-area">Minimizing Area</a></li>
+  <li><a href="#hazard-unit" id="toc-hazard-unit" class="nav-link" data-scroll-target="#hazard-unit">Hazard Unit</a></li>
+  <li><a href="#branch-prediction" id="toc-branch-prediction" class="nav-link" data-scroll-target="#branch-prediction">Branch Prediction</a></li>
+  </ul></li>
+  <li><a href="#verification" id="toc-verification" class="nav-link" data-scroll-target="#verification">Verification</a>
+  <ul class="collapse">
+  <li><a href="#act4" id="toc-act4" class="nav-link" data-scroll-target="#act4">ACT4</a></li>
+  <li><a href="#coremark" id="toc-coremark" class="nav-link" data-scroll-target="#coremark">CoreMark</a></li>
+  <li><a href="#a-bug-act4-missed" id="toc-a-bug-act4-missed" class="nav-link" data-scroll-target="#a-bug-act4-missed">A Bug ACT4 Missed</a></li>
+  </ul></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
+  <ul class="collapse">
+  <li><a href="#time-breakdown" id="toc-time-breakdown" class="nav-link" data-scroll-target="#time-breakdown">Time Breakdown</a></li>
+  </ul></li>
+  <li><a href="#future-improvements" id="toc-future-improvements" class="nav-link" data-scroll-target="#future-improvements">Future Improvements</a></li>
+  <li><a href="#reflection" id="toc-reflection" class="nav-link" data-scroll-target="#reflection">Reflection</a>
+  <ul class="collapse">
+  <li><a href="#teamwork" id="toc-teamwork" class="nav-link" data-scroll-target="#teamwork">Teamwork</a></li>
+  <li><a href="#use-of-ai" id="toc-use-of-ai" class="nav-link" data-scroll-target="#use-of-ai">Use of AI</a></li>
+  </ul></li>
+  <li><a href="#source-code" id="toc-source-code" class="nav-link" data-scroll-target="#source-code">Source Code</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Pipelined RISC-V Processor</h1>
+<p class="subtitle lead">E154 System-on-Chip Design Final Project</p>
+</div>
+
+<div>
+  <div class="description">
+    A 5-stage RV32IM pipelined processor with a 3-stage multiplier and static branch prediction, synthesized on SKY130 for a 10x figure-of-merit improvement over a single-cycle baseline.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Pierce Clark and Max Conine </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 30, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>For the 2026 System-on-Chip Design (E154) final project, my partner Max Conine and I turned a single-cycle RISC-V processor into a pipelined one. We then optimized it by shortening the critical path, reducing hazard penalties, and cutting area. The final processor scored over ten times the original’s figure of merit and ran CoreMark 62.4% faster.</p>
+<p>The project gave us experience with the full SoC development loop: microarchitecture design, RTL in SystemVerilog, verification against compliance tests and benchmarks, and iterating on synthesis results.</p>
+<p>The full <a href="images/SOCFinalReport.pdf">project report</a> and <a href="images/SOCFinalPresentation.pdf">final presentation</a> are available as PDFs.</p>
+</section>
+<section id="microarchitecture" class="level2">
+<h2 class="anchored" data-anchor-id="microarchitecture">Microarchitecture</h2>
+<p>The processor uses a 5-stage pipeline implementing the RV32IM instruction set, with a dedicated 3-stage multiply unit and a hazard unit that handles forwarding, stalls, and flushes. The design is based on the pipelined processor from <em>Digital Design and Computer Architecture, RISC-V Edition</em> by David and Sarah Harris, and on the <a href="https://github.com/openhwgroup/cvw">CORE-V Wally</a> RISC-V processor.</p>
+<div id="fig-top-level" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-top-level-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/TopLevelBlockDiagram.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-top-level-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Top-level block diagram of the 5-stage pipelined processor. The highlighted path through the instruction ROM is the critical path.
+</figcaption>
+</figure>
+</div>
+<section id="implemented-extensions" class="level3">
+<h3 class="anchored" data-anchor-id="implemented-extensions">Implemented Extensions</h3>
+<p><strong>RV32I.</strong> The base 32-bit integer instruction set provides everything a general-purpose computer needs:</p>
+<ul>
+<li>Integer arithmetic: ADD, SUB, AND, OR, XOR, and shifts</li>
+<li>Loads and stores of bytes, halfwords, and words</li>
+<li>Conditional branches (BEQ, BNE, BLT, BGE, BLTU, BGEU) and jumps (JAL, JALR)</li>
+<li>Set-less-than (SLT, SLTU)</li>
+<li>Immediate operations (ADDI, ANDI, etc.)</li>
+</ul>
+<p><strong>Zmmul.</strong> The multiplication subset of the M extension, without division or remainder:</p>
+<ul>
+<li>MUL: lower 32 bits of the product</li>
+<li>MULH: upper 32 bits, signed × signed</li>
+<li>MULHSU: upper 32 bits, signed × unsigned</li>
+<li>MULHU: upper 32 bits, unsigned × unsigned</li>
+</ul>
+<p>Hardware multiplication removes the software loops that RV32I would otherwise need, which cuts the number of instructions considerably.</p>
+<p><strong>Zicsr and Zicntr.</strong> These let software read the cycle and instructions-retired counters in the control and status register (CSR) file, which CoreMark uses to compute its score.</p>
+</section>
+</section>
+<section id="figure-of-merit" class="level2">
+<h2 class="anchored" data-anchor-id="figure-of-merit">Figure of Merit</h2>
+<p>Processors were scored with a figure of merit provided by the course staff, which weights execution time much more heavily than area:</p>
+<p><span class="math display">\[
+\text{Score} = \frac{10^{30}}{(\text{cycles} \times t_{clk})^3 \times \text{Area}}
+\]</span></p>
+<p>where cycles is the CoreMark cycle count, <span class="math inline">\(t_{clk}\)</span> is the critical path length in ns, and Area is the total cell area in µm². Our priorities followed the weighting: first clock period through pipelining, then cycle count through branch prediction, then area through architectural cleanup.</p>
+</section>
+<section id="processor-optimizations" class="level2">
+<h2 class="anchored" data-anchor-id="processor-optimizations">Processor Optimizations</h2>
+<section id="pipelining" class="level3">
+<h3 class="anchored" data-anchor-id="pipelining">Pipelining</h3>
+<p>The five stages are Fetch, Decode, Execute, Memory, and Writeback. Splitting each instruction across stages shortens the critical path and lets several instructions execute concurrently. Our first pipelined version cut the single-cycle processor’s 8.24 ns critical path to 5.10 ns. We considered a sixth stage, but the 3 ns instruction and data memories put a floor on the clock period, so the extra stage would not have paid off.</p>
+</section>
+<section id="multiply-unit" class="level3">
+<h3 class="anchored" data-anchor-id="multiply-unit">Multiply Unit</h3>
+<div id="fig-mul" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mul-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/MultiplyUnit.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mul-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: The 3-stage multiply unit.
+</figcaption>
+</figure>
+</div>
+<p>The multiply unit (<a href="#fig-mul" class="quarto-xref">Figure&nbsp;2</a>) is a modified version of the Wally multiplier. In the first stage, it computes the four pieces of partial product PP1 with four 16×16 multiplications, along with the sign-correction partial products PP2 through PP4. In the second stage, the four pieces are summed into PP1, all four partial products are added into a 64-bit result, and the upper or lower half is selected based on the instruction.</p>
+<p>The M1 register keeps the partial product calculation off the critical path. This adds two cycles to every multiply, but the shorter critical path more than makes up for it. When a multiply enters Execute, a counter waits two cycles and then resets. While the unit is busy, the rest of the pipeline stalls, which keeps the existing hazard logic correct.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Four 16x16 multiplies — true HALF x HALF critical path</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> PP1E_ll = Aprime_lo * Bprime_lo;</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> PP1E_lh = Aprime_lo * Bprime_hi;</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> PP1E_hl = Aprime_hi * Bprime_lo;</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> PP1E_hh = Aprime_hi * Bprime_hi;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="branch-logic" class="level3">
+<h3 class="anchored" data-anchor-id="branch-logic">Branch Logic</h3>
+<div id="fig-branch-logic" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-branch-logic-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/BranchLogic.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-branch-logic-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Branch resolution logic in the Execute stage.
+</figcaption>
+</figure>
+</div>
+<p>The branch logic decides whether the next PC is PC+4 or the branch target. Instead of a 6-way multiplexer that evaluates each branch type separately, it takes advantage of how RISC-V encodes funct3: bits [2:1] select the comparison and bit [0] selects its polarity.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: center;">Funct3[2:1]</th>
+<th style="text-align: center;">Base Flag</th>
+<th style="text-align: center;">Instructions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">00</td>
+<td style="text-align: center;">FlagsE[0] (Zero)</td>
+<td style="text-align: center;">BEQ, BNE</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">FlagsE[1] (Less Than)</td>
+<td style="text-align: center;">BLT, BGE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">11</td>
+<td style="text-align: center;">FlagsE[2] (Less Than Unsigned)</td>
+<td style="text-align: center;">BLTU, BGEU</td>
+</tr>
+</tbody>
+</table>
+<p>An XOR gate then acts as a conditional inverter. When Funct3E[0] is 0 (e.g., BEQ) the output is the base flag; when it is 1 (e.g., BNE) the output is the inverted flag. This cut the logic from about 60 transistors for a 6-way mux to about 36 for a 3-way mux plus XOR.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always_comb</span> <span class="kw">begin</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">case</span> (Funct3E[<span class="dv">2</span>:<span class="dv">1</span>])</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        <span class="bn">2'b00</span>: base_flag = FlagsE[<span class="dv">0</span>]; <span class="co">// BEQ / BNE</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="bn">2'b10</span>: base_flag = FlagsE[<span class="dv">1</span>]; <span class="co">// BLT / BGE</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="bn">2'b11</span>: base_flag = FlagsE[<span class="dv">2</span>]; <span class="co">// BLTU / BGEU</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">default</span>: base_flag = <span class="bn">1'b0</span>;</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">endcase</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> BranchTaken = base_flag ^ Funct3E[<span class="dv">0</span>];</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="optimized-synthesis" class="level3">
+<h3 class="anchored" data-anchor-id="optimized-synthesis">Optimized Synthesis</h3>
+<p>The processor was synthesized with Synopsys Design Compiler on SkyWater SKY130, an open-source 130 nm PDK. Since the memories have a 3 ns access time, the critical path cannot be shorter than 3 ns, so we targeted 333 MHz to land exactly on that limit. With timing effectively capped, we also told the tool to minimize area.</p>
+<p>We enabled the <code>maxopt</code> flag, which runs the following:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode tcl code-with-copy"><code class="sourceCode tcl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">{</span> <span class="dt">$maxopt</span> <span class="op">==</span> <span class="dv">1</span> <span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    ungroup -all -simple_names -flatten</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    compile_ultra -retime</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    optimize_registers</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ul>
+<li><strong><code>ungroup -all -simple_names -flatten</code></strong> removes the module hierarchy and flattens the design into a single netlist, so the compiler can optimize across module boundaries.</li>
+<li><strong><code>compile_ultra -retime</code></strong> runs the full set of optimizations (datapath optimization, constant propagation, logic restructuring) and lets the compiler move registers across combinational logic to balance path delays.</li>
+<li><strong><code>optimize_registers</code></strong> is a second pass focused on register placement: moving registers to reduce setup time, merging redundant ones, and rebalancing pipeline registers across the flattened netlist.</li>
+</ul>
+<p>The final synthesis settings were:</p>
+<pre class="make"><code>SYNTH_MAKE_FLAGS ?= \
+    OUTPUTBASEDIR=$(WORK_DIR) \
+    NAME=lynn \
+    DESIGN=$(SYNTH_TOP) \
+    SYNTH_FILES=$(SYNTH_FILES) \
+    LIB_FILES=$(LIB_FILES) \
+    PROCESSORTOP=$(PROCESSOR_TOP) \
+    INCDIR=$(INC_DIR) \
+    CONFIG=- \
+    MOD=- \
+    HDLDIR=$(PROCESSOR_DIR) \
+    LYNN=1 \
+    TECH=$(SYNTH_TECH) \
+    MAXOPT=1 \
+    FREQ=333 \
+    MAXCORES=4</code></pre>
+</section>
+<section id="minimizing-area" class="level3">
+<h3 class="anchored" data-anchor-id="minimizing-area">Minimizing Area</h3>
+<p>To reduce area we focused on removing registers. A single unoptimized 32-bit register synthesizes to about 1,300 µm², roughly 0.7% of the final processor, so each one removed made a noticeable difference in score.</p>
+<p><strong>Trimming the CSR file.</strong> Our first CSR file kept counters for every instruction class (R-type, jumps, branches, loads, etc.). We removed everything except instructions retired and clock cycles, which shrank the CSR file by about 50,000 µm².</p>
+<p><strong>Merging pipelined signals.</strong> We had been carrying PC+4 and PCTarget all the way to Writeback. Instead, we route them into ALUResult in Execute and let the writeback mux select ALUResult. This removed four 32-bit pipeline registers and shrank the writeback mux. Similarly, CSRReadData and ImmExtD are muxed together in Decode (selected by CSRSrcD) into a single SharedDataE register, which removed another 32-bit register.</p>
+<p><strong>Simplifying the hazard unit.</strong> Removing the <code>RdE != 0</code> check from the load-use stall logic (so the processor stalls even when a load writes x0) raised the score by about 1%.</p>
+<div id="fig-area" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-area-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/AreaBreakdown.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-area-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Per-module area breakdown of the final processor.
+</figcaption>
+</figure>
+</div>
+<p>As <a href="#fig-area" class="quarto-xref">Figure&nbsp;4</a> shows, the register file and multiply unit together make up about two-thirds of the processor’s area.</p>
+</section>
+<section id="hazard-unit" class="level3">
+<h3 class="anchored" data-anchor-id="hazard-unit">Hazard Unit</h3>
+<div id="fig-hazard" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-hazard-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/HazardUnit.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-hazard-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Hazard unit logic.
+</figcaption>
+</figure>
+</div>
+<p>The hazard unit (<a href="#fig-hazard" class="quarto-xref">Figure&nbsp;5</a>) resolves data hazards by forwarding from Memory or Writeback, and stalls for load-use hazards, inserting a bubble into Execute. It flushes Decode when a branch is predicted taken, and flushes both Decode and Execute on a misprediction. We tuned it to stall or flush only when strictly necessary, reducing the total cycle count. While a multiply is in progress, the hazard unit stalls every stage.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">logic</span> lwStall;</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> lwStall = ResultSrcE0 &amp; ((Rs1D == RdE) | (Rs2D == RdE));</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> StallF  = lwStall | MulBusy;</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> StallD  = lwStall | MulBusy;</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">// Flush Decode if we mispredict in execute OR if we predict taken in decode</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> FlushD  = MispredictE | PredictTakenD;</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Flush Execute if there's a load stall OR if we mispredict in execute</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> FlushE  = lwStall | MispredictE;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="branch-prediction" class="level3">
+<h3 class="anchored" data-anchor-id="branch-prediction">Branch Prediction</h3>
+<p>After the second checkpoint, we added a branch target buffer (BTB) and a 2-bit branch predictor in the Fetch stage to reduce the cycle count.</p>
+<div id="fig-btb" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-btb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/BranchTargetBuffer.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-btb-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Branch target buffer in the Fetch stage (not used in the final design).
+</figcaption>
+</figure>
+</div>
+<p>The BTB derives a 3-bit index from PCF[4:2] and a 10-bit tag from PCF[14:5]. If the tag matches a valid entry in <code>btb_ram</code>, it asserts BTBHitF, and the PC logic selects the predicted target. That target is computed by shifting the stored offset left by two, sign-extending it to 32 bits, and adding it to PCF. We swept the BTB size across several synthesis runs:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: center;">Index Bits</th>
+<th style="text-align: center;">CoreMark/MHz</th>
+<th style="text-align: center;">Figure of Merit</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">2 (4 slots)</td>
+<td style="text-align: center;">2.88</td>
+<td style="text-align: center;">3,749</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">3 (8 slots)</td>
+<td style="text-align: center;">2.95</td>
+<td style="text-align: center;">4,085.3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">4 (16 slots)</td>
+<td style="text-align: center;">3.00</td>
+<td style="text-align: center;">4,000</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">5 (32 slots)</td>
+<td style="text-align: center;">3.03</td>
+<td style="text-align: center;">3,227</td>
+</tr>
+</tbody>
+</table>
+<p>The BTB raised CoreMark/MHz, but it cost area and timing. With the BTB and 2-bit predictor, the processor grew to 214,931 µm² (the BTB alone was 6.7% of it) and the critical path lengthened to 3.17 ns.</p>
+<div id="fig-btb-crit" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-btb-crit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/BTBCriticalPath.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-btb-crit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Critical path with the BTB, highlighted in pink.
+</figcaption>
+</figure>
+</div>
+<p>As <a href="#fig-btb-crit" class="quarto-xref">Figure&nbsp;7</a> shows, the critical path now ran through the combinational logic that generates FlushE, since it depends on both PredictTakenE and PCSrcE.</p>
+<p>Based on this, we designed a predictor with minimal area overhead and no impact on the critical path that still improved CoreMark: <strong>always predict backward branches taken</strong>.</p>
+<div id="fig-bpred" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-bpred-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/BackwardsBranchPredictor.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-bpred-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Backward-taken static branch predictor used in the final design.
+</figcaption>
+</figure>
+</div>
+<p>A negative branch offset (ImmExtD[31] = 1) usually indicates a loop, so the predictor (<a href="#fig-bpred" class="quarto-xref">Figure&nbsp;8</a>) predicts taken whenever a branch has a negative offset, and always predicts JAL taken. PCNext is then set to the predicted target. A correctly predicted taken branch costs one cycle; a misprediction costs two. This raised CoreMark/MHz from 2.83 to 2.91 and is the predictor used in the final processor.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode systemverilog code-with-copy"><code class="sourceCode systemverilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Predict branches taken if offset is negative (ImmExtD[31]).</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">// Predict JAL (JumpD &amp; ~JalrD) as always taken.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> PredictedTargetD = PCD + ImmExtD;</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">assign</span> PredictTakenD = (BranchD &amp; ImmExtD[<span class="dv">31</span>]) | (JumpD &amp; ~JalrD);</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="verification" class="level2">
+<h2 class="anchored" data-anchor-id="verification">Verification</h2>
+<p>We verified the processor with two suites. The ACT4 architectural compliance tests check that each instruction produces the correct result, and CoreMark shows how the processor handles a real program. We found that ACT4 alone was not thorough enough to catch the pipelining bugs that later showed up in CoreMark.</p>
+<section id="act4" class="level3">
+<h3 class="anchored" data-anchor-id="act4">ACT4</h3>
+<p>The final processor passes all 45 ACT4 tests for RV32I, Zicntr, Zihpm, and Zmmul:</p>
+<pre><code>=== Test Log Summary ===
+Total logs:                 45
+Passed:                     45
+Failed:                     0
+Missing 'Completed':        0
+Unreadable:                 0</code></pre>
+</section>
+<section id="coremark" class="level3">
+<h3 class="anchored" data-anchor-id="coremark">CoreMark</h3>
+<p>CoreMark runs with zero errors on the final processor, with a CoreMark/MHz score of 2.91 and a CPI of 1.19:</p>
+<pre><code>WALLY CoreMark Results (from get_time)
+  Elapsed MTIME: 3425167
+  Elapsed MINSTRET: 2864107
+  COREMARK/MHz Score: 10,000,000 / 3425167 = 2.91
+  CPI: 3425167 / 2864107 = 1.19
+2K performance run parameters for coremark.
+CoreMark Size    : 666
+Total ticks      : 3425167
+Iterations       : 10
+Compiler version : GCC15.2.0
+INFO: Test Completed!</code></pre>
+</section>
+<section id="a-bug-act4-missed" class="level3">
+<h3 class="anchored" data-anchor-id="a-bug-act4-missed">A Bug ACT4 Missed</h3>
+<div id="fig-failing-mul" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-failing-mul-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/FailingMulUnit.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-failing-mul-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: Earlier version of the multiply unit that failed CoreMark.
+</figcaption>
+</figure>
+</div>
+<p>At one point the processor passed every ACT4 test but produced wrong results in CoreMark:</p>
+<pre><code>[0]ERROR! list crc 0xec70 - should be 0xe714
+[0]ERROR! matrix crc 0xb9d6 - should be 0x1fd7
+[0]ERROR! state crc 0xb215 - should be 0x8e3a</code></pre>
+<p>The cause was stall logic in an earlier version of the multiply unit (<a href="#fig-failing-mul" class="quarto-xref">Figure&nbsp;9</a>) that failed to stall the second of two back-to-back multiplies. This corner case only exists in a pipelined processor. ACT4 checks that each multiply instruction gives the right answer on its own, but never issues two in a row. It was a hard bug to track down, and a rewarding one to fix.</p>
+</section>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<div id="tbl-results" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Results at each project milestone. Percentages are relative to the previous milestone.
+</figcaption>
+<div aria-describedby="tbl-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 35%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Metric</th>
+<th style="text-align: center;">Initial (single-cycle)</th>
+<th style="text-align: center;">Checkpoint 1</th>
+<th style="text-align: center;">Checkpoint 2</th>
+<th style="text-align: center;">Final</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Figure of Merit</td>
+<td style="text-align: center;">456.99</td>
+<td style="text-align: center;">777.19 (+70.1%)</td>
+<td style="text-align: center;">4,208.96 (+441.6%)</td>
+<td style="text-align: center;"><strong>4,814.14</strong> (+14.4%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Critical Path (ns)</td>
+<td style="text-align: center;">8.24</td>
+<td style="text-align: center;">5.10 (−38.1%)</td>
+<td style="text-align: center;">3.02 (−40.8%)</td>
+<td style="text-align: center;"><strong>3.02</strong> (no change)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Area (µm²)</td>
+<td style="text-align: center;">221,069.87</td>
+<td style="text-align: center;">282,589.71 (+27.8%)</td>
+<td style="text-align: center;">196,409.57 (−30.5%)</td>
+<td style="text-align: center;"><strong>188,099.94</strong> (−4.2%)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CoreMark/MHz</td>
+<td style="text-align: center;">3.79</td>
+<td style="text-align: center;">3.07 (−19.0%)</td>
+<td style="text-align: center;">2.83 (−7.8%)</td>
+<td style="text-align: center;"><strong>2.91</strong> (+2.8%)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CPI</td>
+<td style="text-align: center;">1.00</td>
+<td style="text-align: center;">1.14</td>
+<td style="text-align: center;">1.24</td>
+<td style="text-align: center;"><strong>1.19</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Execution Time (ns)</td>
+<td style="text-align: center;">27,494,271</td>
+<td style="text-align: center;">16,574,458 (−39.7%)</td>
+<td style="text-align: center;">10,655,015 (−35.7%)</td>
+<td style="text-align: center;"><strong>10,336,281</strong> (−3.0%)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>Pipelining (Checkpoint 1) and the faster multiplier with optimized synthesis (Checkpoint 2) produced most of the improvement. Branch prediction and area reduction added the final 14%. Pipelining lowers CoreMark/MHz, since stalls and flushes push CPI above 1, but the much shorter clock period more than compensates.</p>
+<p>We had projected a figure of merit of 7,190, and the final score of 4,814 fell short. We beat our predicted clock period of 3.86 ns, and our final area came in at about half of our estimate. However, we did not implement any new extensions that would have reduced the cycle count. We also expected to gain by compiling CoreMark more aggressively, but the provided build was already fully optimized.</p>
+<section id="time-breakdown" class="level3">
+<h3 class="anchored" data-anchor-id="time-breakdown">Time Breakdown</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Area of Work</th>
+<th style="text-align: right;">Hours</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Pipelining</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Multiply unit</td>
+<td style="text-align: right;">15.5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BTB / branch prediction</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Final report</td>
+<td style="text-align: right;">25</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>Total (both team members)</strong></td>
+<td style="text-align: right;"><strong>120.5</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Our proposal estimated 60–80 hours, based on 5–6 hours per week of pair programming. The actual total of 120.5 hours was well over that estimate.</p>
+</section>
+</section>
+<section id="future-improvements" class="level2">
+<h2 class="anchored" data-anchor-id="future-improvements">Future Improvements</h2>
+<div id="fig-six-stage" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-six-stage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/SixStageBlockDiagram.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-six-stage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: Planned 6-stage pipeline with the Execute stage split in two (not implemented).
+</figcaption>
+</figure>
+</div>
+<p>Our next step would be to split the Execute stage in two (<a href="#fig-six-stage" class="quarto-xref">Figure&nbsp;10</a>). The ALU source-select muxes would sit in the first half, since their inputs arrive from across the processor, which would shorten the critical path and let the multiplier pipeline without stalling.</p>
+<p>That second change matters. In an earlier lab, we found that CoreMark executes 173,933 multiplies. Because the processor currently stalls on every multiply, each one adds stall cycles. That costs about 5% of performance compared to the 3,248,907 total cycles we measured without the multi-cycle multiplier.</p>
+</section>
+<section id="reflection" class="level2">
+<h2 class="anchored" data-anchor-id="reflection">Reflection</h2>
+<section id="teamwork" class="level3">
+<h3 class="anchored" data-anchor-id="teamwork">Teamwork</h3>
+<p>Max and I were both genuinely interested in this project, which kept us motivated. We communicated frequently, held design reviews to agree on architectural decisions, worked through implementation details together, and kept a detailed log of progress and goals.</p>
+<p>For future projects, we would change two things. First, we would invest more in high-level planning before starting implementation, so we weren’t building without a clear plan and could make better architectural decisions up front. Second, we would use our time together more efficiently. Near the end of the project, much of our shared time went to waiting on synthesis runs.</p>
+</section>
+<section id="use-of-ai" class="level3">
+<h3 class="anchored" data-anchor-id="use-of-ai">Use of AI</h3>
+<p>AI was most useful for debugging and for suggesting synthesis improvements. When wiring units together it is easy to mix up signals, and AI was good at spotting those bugs and checking combinational Verilog before compilation. It was not always right: Copilot’s autocomplete sometimes invented signal names while we were connecting modules, and it led us astray while debugging the hazard unit.</p>
+<p>We learned to debug on our own first before asking for help, which gave us a better sense of the possible causes. We also found that giving the model a diagram of the processor helped it understand our code and suggest better fixes.</p>
+</section>
+</section>
+<section id="source-code" class="level2">
+<h2 class="anchored" data-anchor-id="source-code">Source Code</h2>
+<p>The full source is in the <a href="https://github.com/SystemOnChipTeam/SOC_Final_Proj">SOC_Final_Proj repository</a>. The processor RTL is in <a href="https://github.com/SystemOnChipTeam/SOC_Final_Proj/tree/main/examples/exercises/lynn/sample_processor/src"><code>examples/exercises/lynn/sample_processor/src</code></a>, including the <a href="https://github.com/SystemOnChipTeam/SOC_Final_Proj/blob/main/examples/exercises/lynn/sample_processor/src/submodules/mul.sv">multiply unit</a>, <a href="https://github.com/SystemOnChipTeam/SOC_Final_Proj/blob/main/examples/exercises/lynn/sample_processor/src/hazard.sv">hazard unit</a>, and <a href="https://github.com/SystemOnChipTeam/SOC_Final_Proj/blob/main/examples/exercises/lynn/sample_processor/src/ieu.sv">integer execution unit</a>.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/pclarkhmc\.github\.io\/Website\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

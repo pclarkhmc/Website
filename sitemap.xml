@@ -1,39 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://pclarkhmc.github.io/Website/posts/first-post.html</loc>
-    <lastmod>2026-09-07T22:35:22.661Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pclarkhmc.github.io/Website/labs/lab6/lab6.html</loc>
-    <lastmod>2026-10-14T03:40:44.092Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pclarkhmc.github.io/Website/labs/lab3/lab3.html</loc>
-    <lastmod>2026-09-23T21:46:18.488Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pclarkhmc.github.io/Website/labs/lab1/lab1.html</loc>
-    <lastmod>2026-09-10T02:03:24.064Z</lastmod>
+    <loc>https://pclarkhmc.github.io/Website/projects/soc-final/soc-final.html</loc>
+    <lastmod>2026-10-16T20:19:11.757Z</lastmod>
   </url>
   <url>
     <loc>https://pclarkhmc.github.io/Website/blog.html</loc>
-    <lastmod>2026-09-07T22:35:22.643Z</lastmod>
+    <lastmod>2026-10-16T20:19:11.696Z</lastmod>
   </url>
   <url>
     <loc>https://pclarkhmc.github.io/Website/index.html</loc>
-    <lastmod>2026-09-07T22:35:22.656Z</lastmod>
+    <lastmod>2026-10-16T20:19:11.698Z</lastmod>
   </url>
   <url>
-    <loc>https://pclarkhmc.github.io/Website/labs/lab2/lab2.html</loc>
-    <lastmod>2026-09-16T21:38:16.668Z</lastmod>
+    <loc>https://pclarkhmc.github.io/Website/labs/lab6/lab6.html</loc>
+    <lastmod>2026-10-16T20:19:11.721Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/labs/lab1/lab1.html</loc>
+    <lastmod>2026-10-16T20:19:11.701Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/projects.html</loc>
+    <lastmod>2026-10-16T20:19:11.721Z</lastmod>
   </url>
   <url>
     <loc>https://pclarkhmc.github.io/Website/labs/lab4/lab4.html</loc>
-    <lastmod>2026-09-30T22:43:03.856Z</lastmod>
+    <lastmod>2026-10-16T20:19:11.709Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/labs/lab3/lab3.html</loc>
+    <lastmod>2026-10-16T20:19:11.708Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/labs/lab2/lab2.html</loc>
+    <lastmod>2026-10-16T20:19:11.704Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/posts/first-post.html</loc>
+    <lastmod>2026-10-16T20:19:11.721Z</lastmod>
   </url>
   <url>
     <loc>https://pclarkhmc.github.io/Website/labs.html</loc>
-    <lastmod>2026-09-08T18:20:41.770Z</lastmod>
+    <lastmod>2026-10-16T20:19:11.698Z</lastmod>
   </url>
 </urlset>
