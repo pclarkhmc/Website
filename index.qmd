@@ -15,6 +15,10 @@ about:
 
 I'm an engineering student at Harvey Mudd College. I like working where hardware and software meet: designing digital logic, figuring out how processors work, and writing the low-level code that brings a board to life.
 
+[![Die-shot style render of a RISC-V RV32IM 5-stage pipelined processor with labeled blocks: IFU, branch predictor, CSR, decode, register file, ALU, multiplier, hazard unit, and LSU.](images/riscv-core-die.svg)](projects/soc-final/soc-final.qmd)
+
+*A stylized render of the 5-stage RV32IM core my partner and I built, with each block mapped to a module in our RTL. [Read the writeup →](projects/soc-final/soc-final.qmd)*
+
 ## What I Study
 
 ### Computer Architecture
