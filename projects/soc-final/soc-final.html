@@ -220,6 +220,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#time-breakdown" id="toc-time-breakdown" class="nav-link" data-scroll-target="#time-breakdown">Time Breakdown</a></li>
   </ul></li>
+  <li><a href="#physical-layout" id="toc-physical-layout" class="nav-link" data-scroll-target="#physical-layout">Physical Layout</a></li>
   <li><a href="#future-improvements" id="toc-future-improvements" class="nav-link" data-scroll-target="#future-improvements">Future Improvements</a></li>
   <li><a href="#reflection" id="toc-reflection" class="nav-link" data-scroll-target="#reflection">Reflection</a>
   <ul class="collapse">
@@ -270,6 +271,10 @@ window.Quarto = {
 </header>
 
 
+<div style="position:relative;width:100%;height:clamp(440px,62vw,600px);border-radius:18px;overflow:hidden;background:#050507;margin:0 0 0.5rem">
+  <iframe src="chip3d/index.html" title="Interactive 3D model of the processor die" loading="lazy" allowfullscreen="" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+</div>
+<p><em>The processor as a physical chip. Drag to rotate, or switch to “Up close” to see transistors and the metal stack in 3D. See <a href="#physical-layout">Physical Layout</a> for how it was made.</em></p>
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
 <p>For the 2026 System-on-Chip Design (E154) final project, my partner Max Conine and I turned a single-cycle RISC-V processor into a pipelined one. We then optimized it by shortening the critical path, reducing hazard penalties, and cutting area. The final processor scored over ten times the original’s figure of merit and ran CoreMark 62.4% faster.</p>
@@ -593,6 +598,7 @@ Figure&nbsp;9: Earlier version of the multiply unit that failed CoreMark.
 </section>
 <section id="results" class="level2">
 <h2 class="anchored" data-anchor-id="results">Results</h2>
+<div class="table-responsive">
 <div id="tbl-results" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -664,6 +670,7 @@ Table&nbsp;1: Results at each project milestone. Percentages are relative to the
 </div>
 </figure>
 </div>
+</div>
 <p>Pipelining (Checkpoint 1) and the faster multiplier with optimized synthesis (Checkpoint 2) produced most of the improvement. Branch prediction and area reduction added the final 14%. Pipelining lowers CoreMark/MHz, since stalls and flushes push CPI above 1, but the much shorter clock period more than compensates.</p>
 <p>We had projected a figure of merit of 7,190, and the final score of 4,814 fell short. We beat our predicted clock period of 3.86 ns, and our final area came in at about half of our estimate. However, we did not implement any new extensions that would have reduced the cycle count. We also expected to gain by compiling CoreMark more aggressively, but the provided build was already fully optimized.</p>
 <section id="time-breakdown" class="level3">
@@ -701,6 +708,54 @@ Table&nbsp;1: Results at each project milestone. Percentages are relative to the
 <p>Our proposal estimated 60–80 hours, based on 5–6 hours per week of pair programming. The actual total of 120.5 hours was well over that estimate.</p>
 </section>
 </section>
+<section id="physical-layout" class="level2">
+<h2 class="anchored" data-anchor-id="physical-layout">Physical Layout</h2>
+<p>The class flow stops at synthesis, so after the project I took the final RTL through a full place-and-route to see what the processor would look like as a chip. I used the open-source <a href="https://theopenroad.org/">OpenROAD</a> flow on the same SkyWater SKY130 process: Yosys synthesized the design to 10,580 standard cells, and OpenROAD floorplanned, placed, built the clock tree, and routed every wire. The routed layout was then merged with the real transistor-level layouts of the SKY130 standard cells, so the images below come directly from the chip’s mask geometry. The 3D model at the top of this page is built from the same data: the die’s surface textures are baked from the mask layers, and the close-up extrudes every polygon in an 18 × 16 µm patch to SKY130’s actual layer heights.</p>
+<div id="fig-die" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-die-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/DieLayout.jpg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-die-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: The full 526 × 526 µm die. The gold horizontal and silver vertical stripes are the top two metal layers, which carry power across the chip. The empty patch in the upper left holds only filler cells, since the logic only needs about 55% of the core.
+</figcaption>
+</figure>
+</div>
+<p>Zooming in shows the layers underneath. In <a href="#fig-die-routing" class="quarto-xref">Figure&nbsp;11</a>, the signal wiring on metal layers 1 through 3 runs on a fixed grid of tracks beneath the power stripes.</p>
+<div id="fig-die-routing" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-die-routing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/DieZoomRouting.jpg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-die-routing-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: An 80 × 60 µm region with the power grid and signal routing.
+</figcaption>
+</figure>
+</div>
+<p>With the upper metal layers removed (<a href="#fig-die-cells" class="quarto-xref">Figure&nbsp;12</a>), the rows of standard cells appear. The copper bands are the power and ground rails that every cell in a row shares, and the green vertical wires are metal 2 connecting cells across rows.</p>
+<div id="fig-die-cells" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-die-cells-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/DieZoomCells.jpg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-die-cells-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: A 24 × 16 µm region with metal 3 and above removed.
+</figcaption>
+</figure>
+</div>
+<p>At the smallest scale (<a href="#fig-die-transistors" class="quarto-xref">Figure&nbsp;13</a>), the individual transistors are visible. Each orange polysilicon line that crosses a green diffusion region is a transistor gate, the gray local interconnect wires transistors together into gates and flip-flops, and the metal 1 wires above connect those cells to each other.</p>
+<div id="fig-die-transistors" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-die-transistors-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/DieZoomTransistors.jpg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-die-transistors-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: A 12 × 7 µm region down to metal 1. Each orange line crossing green diffusion is a single transistor.
+</figcaption>
+</figure>
+</div>
+<p>This layout is an illustration rather than a signoff-quality chip. I capped the detailed router early, so it still has unresolved spacing violations. Yosys also builds the multiplier from ripple-carry adders instead of the fast DesignWare components Design Compiler uses, so this netlist is much slower than our 3.02 ns result, and the tools aren’t sizing cells against the same timing target. The timing and area numbers in this report come from Design Compiler.</p>
+</section>
 <section id="future-improvements" class="level2">
 <h2 class="anchored" data-anchor-id="future-improvements">Future Improvements</h2>
 <div id="fig-six-stage" class="quarto-float quarto-figure quarto-figure-center anchored">
@@ -709,11 +764,11 @@ Table&nbsp;1: Results at each project milestone. Percentages are relative to the
 <img src="images/SixStageBlockDiagram.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-six-stage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;10: Planned 6-stage pipeline with the Execute stage split in two (not implemented).
+Figure&nbsp;14: Planned 6-stage pipeline with the Execute stage split in two (not implemented).
 </figcaption>
 </figure>
 </div>
-<p>Our next step would be to split the Execute stage in two (<a href="#fig-six-stage" class="quarto-xref">Figure&nbsp;10</a>). The ALU source-select muxes would sit in the first half, since their inputs arrive from across the processor, which would shorten the critical path and let the multiplier pipeline without stalling.</p>
+<p>Our next step would be to split the Execute stage in two (<a href="#fig-six-stage" class="quarto-xref">Figure&nbsp;14</a>). The ALU source-select muxes would sit in the first half, since their inputs arrive from across the processor, which would shorten the critical path and let the multiplier pipeline without stalling.</p>
 <p>That second change matters. In an earlier lab, we found that CoreMark executes 173,933 multiplies. Because the processor currently stalls on every multiply, each one adds stall cycles. That costs about 5% of performance compared to the 3,248,907 total cycles we measured without the multi-cycle multiplier.</p>
 </section>
 <section id="reflection" class="level2">

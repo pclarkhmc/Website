@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RV32IM Die Viewer</title>
+<style>
+  :root {
+    --bg0: #050507;
+    --fg: #f5f5f7;
+    --muted: #a1a1a6;
+    --dim: #6e6e73;
+    --accent: #f5d27a;
+    --glass: rgba(255, 255, 255, 0.08);
+    --line: rgba(255, 255, 255, 0.14);
+  }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--bg0); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  #stage {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 50% 45%, #262931 0%, #101116 50%, #050507 100%);
+  }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .hud { position: absolute; pointer-events: none; }
+  #title { top: clamp(14px, 4vh, 40px); left: 0; right: 0; text-align: center; padding: 0 16px; }
+  .eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  h1 {
+    margin: .25em 0 .15em; font-size: clamp(24px, 4.6vw, 50px); font-weight: 600; letter-spacing: -.02em;
+    background: linear-gradient(180deg, #ffffff, #b4b8c3); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { font-size: clamp(12px, 1.5vw, 16px); color: var(--muted); transition: opacity .4s; }
+  #controls {
+    bottom: clamp(14px, 4vh, 34px); left: 0; right: 0; padding: 0 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .seg {
+    pointer-events: auto; display: inline-flex; padding: 4px; border-radius: 999px;
+    background: rgba(18, 19, 24, 0.62); border: 1px solid var(--line);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  }
+  .seg button {
+    all: unset; cursor: pointer; padding: 8px 18px; border-radius: 999px;
+    font-size: 14px; color: var(--muted); transition: background .25s, color .25s;
+  }
+  .seg button[aria-pressed="true"] { background: rgba(255, 255, 255, .92); color: #111; }
+  .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #explode {
+    pointer-events: auto; display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--muted); opacity: 0; visibility: hidden; transition: opacity .4s, visibility .4s;
+  }
+  #explode.show { opacity: 1; visibility: visible; }
+  input[type="range"] { accent-color: var(--accent); width: min(220px, 50vw); }
+  .hint { font-size: 12px; color: var(--dim); }
+  #legend {
+    right: 18px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted);
+    opacity: 0; transition: opacity .4s;
+  }
+  #legend.show { opacity: 1; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+  #loading { inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; transition: opacity .6s; }
+  #fs { pointer-events: auto; position: absolute; top: 12px; right: 12px; font-size: 12px; color: var(--dim); text-decoration: none; display: none; }
+  #fs:hover { color: var(--fg); }
+  .embedded #fs { display: block; }
+  @media (max-width: 700px) { #legend { display: none; } }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+
+<div class="hud" id="loading">Loading die…</div>
+
+<div class="hud" id="title">
+  <div class="eyebrow">SkyWater SKY130 · 130 nm</div>
+  <h1>RV32IM, in silicon.</h1>
+  <div class="sub" id="sub">526 × 526 µm die · 10,580 standard cells · placed and routed with OpenROAD</div>
+</div>
+
+<div class="hud" id="legend"></div>
+
+<div class="hud" id="controls">
+  <div class="seg" role="group" aria-label="View">
+    <button id="btn-die" aria-pressed="true">Die</button>
+    <button id="btn-close" aria-pressed="false">Up close</button>
+  </div>
+  <label id="explode">Stack <input id="explode-range" type="range" min="0" max="1" step="0.001" value="0"> Exploded</label>
+  <div class="hint">Drag to rotate · Scroll or pinch to zoom</div>
+</div>
+
+<a id="fs" href="index.html" target="_blank" rel="noopener">Open full screen ↗</a>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+if (window.self !== window.top) document.body.classList.add('embedded');
+
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.9;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+stage.appendChild(renderer.domElement);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envMap = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 500);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.enablePan = false;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.7;
+controls.maxPolarAngle = Math.PI * 0.49;
+
+// Pause auto-rotation while the viewer is being handled, resume after a few idle seconds.
+let idleTimer;
+controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(idleTimer); });
+controls.addEventListener('end', () => { idleTimer = setTimeout(() => (controls.autoRotate = true), 4000); });
+
+// A light that slowly circles the chip so reflections sweep across the metal.
+function addLights(scene, radius) {
+  scene.environment = envMap;
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(radius * 0.6, radius, radius * 0.4);
+  scene.add(key);
+  const sweep = new THREE.DirectionalLight(0xfff1d6, 2.2);
+  scene.add(sweep);
+  return (t) => sweep.position.set(Math.cos(t * 0.35) * radius, radius * 0.55, Math.sin(t * 0.35) * radius);
+}
+
+function contactShadow(size) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d');
+  const grd = g.createRadialGradient(128, 128, 20, 128, 128, 128);
+  grd.addColorStop(0, 'rgba(0,0,0,0.75)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 256, 256);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2;
+  return m;
+}
+
+// ---------- Die: the full chip with textures baked from the real mask layers ----------
+const DIE = 5.2617;       // 526.17 um, at 100 um per scene unit
+const THICK = 0.22;
+const dieScene = new THREE.Scene();
+const dieLights = addLights(dieScene, 8);
+
+async function buildDie() {
+  const loader = new THREE.TextureLoader();
+  const [albedo, normal, orm] = await Promise.all(
+    ['albedo.jpg', 'normal.jpg', 'orm.jpg'].map((u) => loader.loadAsync(u)));
+  albedo.colorSpace = THREE.SRGBColorSpace;
+  const aniso = renderer.capabilities.getMaxAnisotropy();
+  for (const t of [albedo, normal, orm]) t.anisotropy = aniso;
+
+  const top = new THREE.Mesh(new THREE.PlaneGeometry(DIE, DIE), new THREE.MeshPhysicalMaterial({
+    map: albedo, normalMap: normal, roughnessMap: orm, metalnessMap: orm,
+    roughness: 1, metalness: 1, envMapIntensity: 0.65,
+    clearcoat: 0.45, clearcoatRoughness: 0.12,           // glassy passivation layer
+    iridescence: 0.5, iridescenceIOR: 1.46,               // thin-film sheen of the oxide
+    iridescenceThicknessRange: [250, 800],
+  }));
+  top.rotation.x = -Math.PI / 2;
+  top.position.y = 0.0005;
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(DIE, THICK, DIE),
+    new THREE.MeshPhysicalMaterial({ color: 0x2b2e36, metalness: 0.55, roughness: 0.3, clearcoat: 0.6 }));
+  body.position.y = -THICK / 2;
+
+  const shadow = contactShadow(DIE * 1.9);
+  shadow.position.y = -THICK - 0.02;
+
+  dieScene.add(top, body, shadow);
+}
+
+// ---------- Up close: an 18 x 16 um patch extruded with the real SKY130 layer heights ----------
+const closeScene = new THREE.Scene();
+const closeLights = addLights(closeScene, 30);
+const STYLE = {
+  diff:  { label: 'Diffusion',          color: 0x5d8a57, metalness: 0.0, roughness: 0.6 },
+  poly:  { label: 'Polysilicon gates',  color: 0xe0623a, metalness: 0.15, roughness: 0.35 },
+  licon: { label: 'Contacts',           color: 0xc9ccd6, metalness: 1.0, roughness: 0.3 },
+  li1:   { label: 'Local interconnect', color: 0x9aa1b6, metalness: 0.8, roughness: 0.35 },
+  mcon:  { label: null,                 color: 0xc9ccd6, metalness: 1.0, roughness: 0.3 },
+  met1:  { label: 'Metal 1',            color: 0xe6a77a, metalness: 1.0, roughness: 0.22 },
+  via1:  { label: 'Vias',               color: 0xd8dbe4, metalness: 1.0, roughness: 0.25 },
+  met2:  { label: 'Metal 2',            color: 0x9fd8c4, metalness: 1.0, roughness: 0.22 },
+  via2:  { label: null,                 color: 0xd8dbe4, metalness: 1.0, roughness: 0.25 },
+  met3:  { label: 'Metal 3',            color: 0xf0d08a, metalness: 1.0, roughness: 0.2 },
+  via3:  { label: null,                 color: 0xd8dbe4, metalness: 1.0, roughness: 0.25 },
+  met4:  { label: 'Metal 4',            color: 0xc8d2f0, metalness: 1.0, roughness: 0.18 },
+  via4:  { label: null,                 color: 0xd8dbe4, metalness: 1.0, roughness: 0.25 },
+  met5:  { label: 'Metal 5',            color: 0xf5d27a, metalness: 1.0, roughness: 0.16 },
+};
+const layerMeshes = [];
+let closeBuilt = null;
+
+function buildClose() {
+  closeBuilt ??= (async () => {
+    const data = await (await fetch('closeup.json')).json();
+    const [W, H] = data.size;
+    data.layers.forEach((L, i) => {
+      if (!L.polys.length) return;
+      const depth = L.z[1] - L.z[0];
+      const parts = L.polys.map(([hull, ...holes]) => {
+        const shape = new THREE.Shape(hull.map(([x, y]) => new THREE.Vector2(x, y)));
+        for (const h of holes) shape.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
+        return new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 1 });
+      });
+      const geo = mergeGeometries(parts, false);
+      parts.forEach((p) => p.dispose());
+      geo.rotateX(-Math.PI / 2);          // layout y -> -z, extrusion -> +y
+      geo.translate(-W / 2, 0, H / 2);
+      const s = STYLE[L.name];
+      const mesh = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
+        color: s.color, metalness: s.metalness, roughness: s.roughness, clearcoat: 0.2,
+      }));
+      mesh.userData = { base: L.z[0], rank: i };
+      mesh.position.y = L.z[0];
+      layerMeshes.push(mesh);
+      closeScene.add(mesh);
+    });
+    const substrate = new THREE.Mesh(new THREE.BoxGeometry(W, 1.2, H),
+      new THREE.MeshPhysicalMaterial({ color: 0x24272e, metalness: 0.4, roughness: 0.4 }));
+    substrate.position.y = -0.6;
+    const shadow = contactShadow(Math.max(W, H) * 1.9);
+    shadow.position.y = -1.25;
+    closeScene.add(substrate, shadow);
+
+    const legend = document.getElementById('legend');
+    for (const s of Object.values(STYLE).reverse()) {
+      if (!s.label) continue;
+      const row = document.createElement('div');
+      row.innerHTML = `<span class="sw" style="background:#${s.color.toString(16).padStart(6, '0')}"></span>${s.label}`;
+      legend.appendChild(row);
+    }
+  })();
+  return closeBuilt;
+}
+
+document.getElementById('explode-range').addEventListener('input', (e) => {
+  const spread = Number(e.target.value) * 1.4;   // um of extra gap per layer
+  for (const m of layerMeshes) m.position.y = m.userData.base + spread * m.userData.rank;
+});
+
+// ---------- Views and camera moves ----------
+const VIEWS = {
+  die: {
+    scene: dieScene, lights: dieLights, target: new THREE.Vector3(0, -0.05, 0),
+    pos: new THREE.Vector3(6.9, 6.6, 9.1), min: 1.2, max: 18,
+    sub: '526 × 526 µm die · 10,580 standard cells · placed and routed with OpenROAD',
+  },
+  close: {
+    scene: closeScene, lights: closeLights, target: new THREE.Vector3(0, 2.2, 0),
+    pos: new THREE.Vector3(24, 21, 31), min: 4, max: 90,
+    sub: '18 × 16 µm cutaway · true-scale SKY130 layer stack, transistors to metal 5',
+  },
+};
+let view = VIEWS.die;
+let flight = null;
+
+async function setView(name) {
+  const next = VIEWS[name];
+  if (next === view) return;
+  if (name === 'close') await buildClose();
+  view = next;
+  document.getElementById('btn-die').setAttribute('aria-pressed', name === 'die');
+  document.getElementById('btn-close').setAttribute('aria-pressed', name === 'close');
+  document.getElementById('explode').classList.toggle('show', name === 'close');
+  document.getElementById('legend').classList.toggle('show', name === 'close');
+  document.getElementById('sub').textContent = next.sub;
+  controls.minDistance = next.min;
+  controls.maxDistance = next.max;
+  // Start slightly further out and glide in.
+  controls.target.copy(next.target);
+  flight = { from: next.pos.clone().multiplyScalar(1.6), to: next.pos.clone(), t0: performance.now(), dur: 1400 };
+  camera.position.copy(flight.from);
+}
+document.getElementById('btn-die').addEventListener('click', () => setView('die'));
+document.getElementById('btn-close').addEventListener('click', () => setView('close'));
+
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  // Pull back on narrow screens so the whole die fits.
+  camera.zoom = Math.min(1, (w / h) / 1.1);
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+let visible = true;
+new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(stage);
+
+const ease = (x) => 1 - Math.pow(1 - x, 3);
+renderer.setAnimationLoop((now) => {
+  if (!visible || document.hidden) return;
+  if (flight) {
+    const k = Math.min(1, (now - flight.t0) / flight.dur);
+    camera.position.lerpVectors(flight.from, flight.to, ease(k));
+    if (k === 1) flight = null;
+  }
+  view.lights(now / 1000);
+  controls.update();
+  renderer.render(view.scene, camera);
+});
+
+camera.position.copy(VIEWS.die.pos);
+controls.target.copy(VIEWS.die.target);
+controls.minDistance = VIEWS.die.min;
+controls.maxDistance = VIEWS.die.max;
+
+try {
+  await buildDie();
+  const loading = document.getElementById('loading');
+  loading.style.opacity = 0;
+  setTimeout(() => loading.remove(), 700);
+  flight = { from: VIEWS.die.pos.clone().multiplyScalar(1.6), to: VIEWS.die.pos.clone(), t0: performance.now(), dur: 2200 };
+  if (new URLSearchParams(location.search).get('view') === 'close') setView('close');
+  else buildClose();   // warm the cutaway in the background
+} catch (err) {
+  document.getElementById('loading').textContent = 'Could not load the die textures.';
+  console.error(err);
+}
+</script>
+</body>
+</html>
