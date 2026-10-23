@@ -13,7 +13,7 @@ about:
           href: https://github.com/pclarkhmc
 ---
 
-I'm an engineering student at Harvey Mudd College. I focus of study is computer architecture, digital logic design, and microprocesser based systems.
+I'm an engineering student at Harvey Mudd College studying computer architecture, digital logic design, and microprocessor-based systems. As a [Clay-Wolkin Fellow](https://www.hmc.edu/engineering/engineering-fellowships/clay-wolkin-fellowship/), I work on RISC-V certification and design, and at [TRL11](https://www.trl11.com/) I worked on space-qualified networking hardware.
 
 ```{=html}
 <div style="position:relative;width:100%;height:clamp(440px,66vw,620px);border-radius:18px;overflow:hidden;background:#050507;margin:1.5rem 0 0.5rem">
@@ -22,7 +22,9 @@ I'm an engineering student at Harvey Mudd College. I focus of study is computer 
 </div>
 ```
 
-*The 5-stage RV32IM processor my partner and I built, placed and routed on SkyWater SKY130 and rendered from its real layout. Drag to rotate, or switch to "Up close" to see the transistors. [Read the writeup →](projects/soc-final/soc-final.qmd)*
+My 5-stage RV32IM processor, placed and routed on SkyWater SKY130 and rendered from its layout. 
+
+[Read the writeup →](projects/soc-final/soc-final.qmd)
 
 ## On This Site
 
