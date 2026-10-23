@@ -88,14 +88,7 @@
     "href": "index.html",
     "title": "Pierce Clark",
     "section": "",
-    "text": "I’m an engineering student at Harvey Mudd College. I like working where hardware and software meet: designing digital logic, figuring out how processors work, and writing the low-level code that brings a board to life."
-  },
-  {
-    "objectID": "index.html#what-i-study",
-    "href": "index.html#what-i-study",
-    "title": "Pierce Clark",
-    "section": "What I Study",
-    "text": "What I Study\n\nComputer Architecture\nHow processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a 5-stage pipelined processor and optimized it for speed and area. I’ve also worked on RISC-V’s debug trigger extension, which adds hardware breakpoints and watchpoints to the architecture.\n\n\nDesign & Verification\nWriting SystemVerilog and proving it works with simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I write certification tests for RISC-V Sdtrig, and I’ve found and reported bugs in a RISC-V reference simulator along the way.\n\n\nEmbedded Systems\nRegister-level microcontroller programming and real peripherals. In Microprocessor-based Systems (E155), I’ve used an iCE40 FPGA and an STM32L432KC to build a keypad scanner, digital audio, and a Wi-Fi temperature monitor over SPI.\n\n\nIndustry Hardware\nAt TRL11, I worked on space-qualified networking hardware."
+    "text": "I’m an engineering student at Harvey Mudd College studying computer architecture, digital logic design, and microprocessor-based systems. As a Clay-Wolkin Fellow, I work on RISC-V certification and design, and at TRL11 I worked on space-qualified networking hardware.\nMy 5-stage RV32IM processor, placed and routed on SkyWater SKY130 and rendered from its layout.\nRead the writeup →"
   },
   {
     "objectID": "index.html#on-this-site",
