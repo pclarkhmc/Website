@@ -67,6 +67,14 @@
   #fs { pointer-events: auto; position: absolute; top: 12px; right: 12px; font-size: 12px; color: var(--dim); text-decoration: none; display: none; }
   #fs:hover { color: var(--fg); }
   .embedded #fs { display: block; }
+  /* Compact HUD inside an embed so the chip gets more of the frame */
+  .embedded #title { top: 12px; }
+  .embedded .eyebrow { font-size: 10px; }
+  .embedded h1 { font-size: clamp(20px, 3.4vw, 32px); margin: .15em 0 .1em; }
+  .embedded .sub { font-size: 12px; }
+  .embedded #controls { bottom: 12px; gap: 8px; }
+  .embedded .hint { display: none; }
+  .embedded .seg button { padding: 6px 16px; font-size: 13px; }
   @media (max-width: 700px) { #legend { display: none; } }
 </style>
 </head>
@@ -172,13 +180,14 @@ async function buildDie() {
 
   const top = new THREE.Mesh(new THREE.PlaneGeometry(DIE, DIE), new THREE.MeshPhysicalMaterial({
     map: albedo, normalMap: normal, roughnessMap: orm, metalnessMap: orm,
-    roughness: 1, metalness: 1, envMapIntensity: 0.65,
-    clearcoat: 0.45, clearcoatRoughness: 0.12,           // glassy passivation layer
+    roughness: 1, metalness: 1, envMapIntensity: 0.55,
+    clearcoat: 0.35, clearcoatRoughness: 0.12,           // glassy passivation layer
     iridescence: 0.5, iridescenceIOR: 1.46,               // thin-film sheen of the oxide
     iridescenceThicknessRange: [250, 800],
+    polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
   }));
   top.rotation.x = -Math.PI / 2;
-  top.position.y = 0.0005;
+  top.position.y = 0.002;
 
   const body = new THREE.Mesh(new THREE.BoxGeometry(DIE, THICK, DIE),
     new THREE.MeshPhysicalMaterial({ color: 0x2b2e36, metalness: 0.55, roughness: 0.3, clearcoat: 0.6 }));
@@ -216,6 +225,7 @@ function buildClose() {
   closeBuilt ??= (async () => {
     const data = await (await fetch('closeup.json')).json();
     const [W, H] = data.size;
+    closeSize = [W, H];
     data.layers.forEach((L, i) => {
       if (!L.polys.length) return;
       const depth = L.z[1] - L.z[0];
@@ -255,57 +265,108 @@ function buildClose() {
   return closeBuilt;
 }
 
-document.getElementById('explode-range').addEventListener('input', (e) => {
-  const spread = Number(e.target.value) * 1.4;   // um of extra gap per layer
-  for (const m of layerMeshes) m.position.y = m.userData.base + spread * m.userData.rank;
-});
+// ---------- Views and camera framing ----------
+// Each view is framed by its bounding sphere, so nothing clips at any rotation angle.
+let closeSize = [18, 16];
+let spread = 0;                          // um of extra gap per layer in the exploded cutaway
+const STACK_TOP = 6.63, SUBSTRATE = 1.2;
 
-// ---------- Views and camera moves ----------
 const VIEWS = {
   die: {
-    scene: dieScene, lights: dieLights, target: new THREE.Vector3(0, -0.05, 0),
-    pos: new THREE.Vector3(6.9, 6.6, 9.1), min: 1.2, max: 18,
+    scene: dieScene, lights: dieLights, dir: new THREE.Vector3(6.9, 6.6, 9.1).normalize(),
+    near: 0.05, far: 100, min: 1.2,
+    sphere: () => ({ center: new THREE.Vector3(0, -THICK / 2, 0), radius: Math.hypot(DIE / 2, DIE / 2, THICK / 2) }),
     sub: '526 × 526 µm die · 10,580 standard cells · placed and routed with OpenROAD',
   },
   close: {
-    scene: closeScene, lights: closeLights, target: new THREE.Vector3(0, 2.2, 0),
-    pos: new THREE.Vector3(24, 21, 31), min: 4, max: 90,
+    scene: closeScene, lights: closeLights, dir: new THREE.Vector3(24, 19, 31).normalize(),
+    near: 0.2, far: 600, min: 4,
+    sphere: () => {
+      const h = STACK_TOP + SUBSTRATE + spread * (layerMeshes.length - 1);
+      return { center: new THREE.Vector3(0, h / 2 - SUBSTRATE, 0), radius: Math.hypot(closeSize[0] / 2, closeSize[1] / 2, h / 2) };
+    },
     sub: '18 × 16 µm cutaway · true-scale SKY130 layer stack, transistors to metal 5',
   },
 };
 let view = VIEWS.die;
+let fitDist = 1;
 let flight = null;
+
+const hudTop = document.getElementById('title');
+const hudBottom = document.getElementById('controls');
+
+// Distance at which the view's bounding sphere fits in the band between the title and the
+// controls. Also offsets the projection so the scene sits in the middle of that band.
+function measureFit() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const top = hudTop.getBoundingClientRect().bottom + 6;
+  const bottom = H - hudBottom.getBoundingClientRect().top + 6;
+  const band = Math.max(H - top - bottom, H * 0.4);
+  const shift = Math.max(0, Math.min(top - bottom, H * 0.2)) / 2;
+  camera.setViewOffset(W, H, 0, -shift, W, H);
+  const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const half = Math.min(Math.atan(t * band / H), Math.atan(t * W / H));
+  return view.sphere().radius / Math.sin(half) * 1.03;
+}
+
+// Re-frame after a size or explode change, keeping the user's zoom relative to the fit.
+function refit() {
+  const prev = fitDist;
+  const { center } = view.sphere();
+  fitDist = measureFit();
+  controls.minDistance = Math.min(view.min, fitDist);
+  controls.maxDistance = fitDist * 1.8;
+  const off = camera.position.clone().sub(controls.target).multiplyScalar(fitDist / prev);
+  controls.target.copy(center);
+  if (!flight) camera.position.copy(center).add(off);
+  else flight.to.copy(center).addScaledVector(view.dir, fitDist);
+}
+
+// Glide in from further out along the view's preset direction.
+function flyIn(dur) {
+  const { center } = view.sphere();
+  fitDist = measureFit();
+  controls.target.copy(center);
+  controls.minDistance = Math.min(view.min, fitDist);
+  controls.maxDistance = fitDist * 1.8;
+  flight = {
+    from: center.clone().addScaledVector(view.dir, fitDist * 1.6),
+    to: center.clone().addScaledVector(view.dir, fitDist),
+    t0: performance.now(), dur,
+  };
+  camera.position.copy(flight.from);
+}
 
 async function setView(name) {
   const next = VIEWS[name];
   if (next === view) return;
   if (name === 'close') await buildClose();
   view = next;
+  camera.near = next.near; camera.far = next.far;
   document.getElementById('btn-die').setAttribute('aria-pressed', name === 'die');
   document.getElementById('btn-close').setAttribute('aria-pressed', name === 'close');
   document.getElementById('explode').classList.toggle('show', name === 'close');
   document.getElementById('legend').classList.toggle('show', name === 'close');
   document.getElementById('sub').textContent = next.sub;
-  controls.minDistance = next.min;
-  controls.maxDistance = next.max;
-  // Start slightly further out and glide in.
-  controls.target.copy(next.target);
-  flight = { from: next.pos.clone().multiplyScalar(1.6), to: next.pos.clone(), t0: performance.now(), dur: 1400 };
-  camera.position.copy(flight.from);
+  flyIn(1400);
 }
 document.getElementById('btn-die').addEventListener('click', () => setView('die'));
 document.getElementById('btn-close').addEventListener('click', () => setView('close'));
+
+document.getElementById('explode-range').addEventListener('input', (e) => {
+  spread = Number(e.target.value) * 1.4;
+  for (const m of layerMeshes) m.position.y = m.userData.base + spread * m.userData.rank;
+  refit();
+});
 
 function resize() {
   const w = stage.clientWidth, h = stage.clientHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
-  // Pull back on narrow screens so the whole die fits.
-  camera.zoom = Math.min(1, (w / h) / 1.1);
+  refit();
   camera.updateProjectionMatrix();
 }
 new ResizeObserver(resize).observe(stage);
-resize();
 
 let visible = true;
 new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(stage);
@@ -318,22 +379,25 @@ renderer.setAnimationLoop((now) => {
     camera.position.lerpVectors(flight.from, flight.to, ease(k));
     if (k === 1) flight = null;
   }
+  camera.updateProjectionMatrix();
   view.lights(now / 1000);
   controls.update();
   renderer.render(view.scene, camera);
 });
 
-camera.position.copy(VIEWS.die.pos);
-controls.target.copy(VIEWS.die.target);
-controls.minDistance = VIEWS.die.min;
-controls.maxDistance = VIEWS.die.max;
+camera.aspect = stage.clientWidth / stage.clientHeight;
+fitDist = measureFit();
+controls.target.copy(view.sphere().center);
+camera.position.copy(controls.target).addScaledVector(view.dir, fitDist);
+camera.updateProjectionMatrix();
+resize();
 
 try {
   await buildDie();
   const loading = document.getElementById('loading');
   loading.style.opacity = 0;
   setTimeout(() => loading.remove(), 700);
-  flight = { from: VIEWS.die.pos.clone().multiplyScalar(1.6), to: VIEWS.die.pos.clone(), t0: performance.now(), dur: 2200 };
+  flyIn(2200);
   if (new URLSearchParams(location.search).get('view') === 'close') setView('close');
   else buildClose();   // warm the cutaway in the background
 } catch (err) {

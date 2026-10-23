@@ -13,34 +13,16 @@ about:
           href: https://github.com/pclarkhmc
 ---
 
-I'm an engineering student at Harvey Mudd College. I like working where hardware and software meet: designing digital logic, figuring out how processors work, and writing the low-level code that brings a board to life.
+I'm an engineering student at Harvey Mudd College. I focus of study is computer architecture, digital logic design, and microprocesser based systems.
 
 ```{=html}
-<div style="position:relative;width:100%;height:clamp(420px,60vw,560px);border-radius:18px;overflow:hidden;background:#050507;margin:1.5rem 0 0.5rem">
+<div style="position:relative;width:100%;height:clamp(440px,66vw,620px);border-radius:18px;overflow:hidden;background:#050507;margin:1.5rem 0 0.5rem">
   <iframe src="projects/soc-final/chip3d/index.html" title="Interactive 3D model of my RV32IM processor die" loading="lazy" allowfullscreen
           style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
 </div>
 ```
 
 *The 5-stage RV32IM processor my partner and I built, placed and routed on SkyWater SKY130 and rendered from its real layout. Drag to rotate, or switch to "Up close" to see the transistors. [Read the writeup →](projects/soc-final/soc-final.qmd)*
-
-## What I Study
-
-### Computer Architecture
-
-How processors are built and what makes them fast. For my System-on-Chip Design final project, my partner and I turned a single-cycle RISC-V core into a [5-stage pipelined processor](projects/soc-final/soc-final.qmd) and optimized it for speed and area. I've also worked on [RISC-V's debug trigger extension](posts/sdtrig-certification-tests.qmd), which adds hardware breakpoints and watchpoints to the architecture.
-
-### Design & Verification
-
-Writing SystemVerilog and proving it works with simulation, compliance tests, and benchmarks. As a Clay-Wolkin Research Fellow, I [write certification tests for RISC-V Sdtrig](posts/sdtrig-certification-tests.qmd), and I've found and reported bugs in a RISC-V reference simulator along the way.
-
-### Embedded Systems
-
-Register-level microcontroller programming and real peripherals. In Microprocessor-based Systems (E155), I've used an iCE40 FPGA and an STM32L432KC to build a [keypad scanner](labs/lab3/lab3.qmd), [digital audio](labs/lab4/lab4.qmd), and a [Wi-Fi temperature monitor](labs/lab6/lab6.qmd) over SPI.
-
-### Industry Hardware
-
-At TRL11, I worked on space-qualified networking hardware.
 
 ## On This Site
 
