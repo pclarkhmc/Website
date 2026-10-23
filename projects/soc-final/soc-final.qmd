@@ -5,7 +5,18 @@ description: "A 5-stage RV32IM pipelined processor with a 3-stage multiplier and
 author: "Pierce Clark and Max Conine"
 date: 2026-04-30
 image: images/TopLevelBlockDiagram.png
+resources:
+  - chip3d/
 ---
+
+```{=html}
+<div style="position:relative;width:100%;height:clamp(440px,62vw,600px);border-radius:18px;overflow:hidden;background:#050507;margin:0 0 0.5rem">
+  <iframe src="chip3d/index.html" title="Interactive 3D model of the processor die" loading="lazy" allowfullscreen
+          style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+</div>
+```
+
+*The processor as a physical chip. Drag to rotate, or switch to "Up close" to see transistors and the metal stack in 3D. See [Physical Layout](#physical-layout) for how it was made.*
 
 ## Introduction
 
@@ -258,6 +269,8 @@ The cause was stall logic in an earlier version of the multiply unit (@fig-faili
 
 ## Results
 
+::: {.table-responsive}
+
 | Metric | Initial (single-cycle) | Checkpoint 1 | Checkpoint 2 | Final |
 |:-------|:----------------------:|:------------:|:------------:|:-----:|
 | Figure of Merit | 456.99 | 777.19 (+70.1%) | 4,208.96 (+441.6%) | **4,814.14** (+14.4%) |
@@ -268,6 +281,8 @@ The cause was stall logic in an earlier version of the multiply unit (@fig-faili
 | Execution Time (ns) | 27,494,271 | 16,574,458 (−39.7%) | 10,655,015 (−35.7%) | **10,336,281** (−3.0%) |
 
 : Results at each project milestone. Percentages are relative to the previous milestone. {#tbl-results}
+
+:::
 
 Pipelining (Checkpoint 1) and the faster multiplier with optimized synthesis (Checkpoint 2) produced most of the improvement. Branch prediction and area reduction added the final 14%. Pipelining lowers CoreMark/MHz, since stalls and flushes push CPI above 1, but the much shorter clock period more than compensates.
 
@@ -284,6 +299,26 @@ We had projected a figure of merit of 7,190, and the final score of 4,814 fell s
 | **Total (both team members)** | **120.5** |
 
 Our proposal estimated 60–80 hours, based on 5–6 hours per week of pair programming. The actual total of 120.5 hours was well over that estimate.
+
+## Physical Layout
+
+The class flow stops at synthesis, so after the project I took the final RTL through a full place-and-route to see what the processor would look like as a chip. I used the open-source [OpenROAD](https://theopenroad.org/) flow on the same SkyWater SKY130 process: Yosys synthesized the design to 10,580 standard cells, and OpenROAD floorplanned, placed, built the clock tree, and routed every wire. The routed layout was then merged with the real transistor-level layouts of the SKY130 standard cells, so the images below come directly from the chip's mask geometry. The 3D model at the top of this page is built from the same data: the die's surface textures are baked from the mask layers, and the close-up extrudes every polygon in an 18 × 16 µm patch to SKY130's actual layer heights.
+
+![The full 526 × 526 µm die. The gold horizontal and silver vertical stripes are the top two metal layers, which carry power across the chip. The empty patch in the upper left holds only filler cells, since the logic only needs about 55% of the core.](images/DieLayout.jpg){#fig-die}
+
+Zooming in shows the layers underneath. In @fig-die-routing, the signal wiring on metal layers 1 through 3 runs on a fixed grid of tracks beneath the power stripes.
+
+![An 80 × 60 µm region with the power grid and signal routing.](images/DieZoomRouting.jpg){#fig-die-routing}
+
+With the upper metal layers removed (@fig-die-cells), the rows of standard cells appear. The copper bands are the power and ground rails that every cell in a row shares, and the green vertical wires are metal 2 connecting cells across rows.
+
+![A 24 × 16 µm region with metal 3 and above removed.](images/DieZoomCells.jpg){#fig-die-cells}
+
+At the smallest scale (@fig-die-transistors), the individual transistors are visible. Each orange polysilicon line that crosses a green diffusion region is a transistor gate, the gray local interconnect wires transistors together into gates and flip-flops, and the metal 1 wires above connect those cells to each other.
+
+![A 12 × 7 µm region down to metal 1. Each orange line crossing green diffusion is a single transistor.](images/DieZoomTransistors.jpg){#fig-die-transistors}
+
+This layout is an illustration rather than a signoff-quality chip. I capped the detailed router early, so it still has unresolved spacing violations. Yosys also builds the multiplier from ripple-carry adders instead of the fast DesignWare components Design Compiler uses, so this netlist is much slower than our 3.02 ns result, and the tools aren't sizing cells against the same timing target. The timing and area numbers in this report come from Design Compiler.
 
 ## Future Improvements
 
