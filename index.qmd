@@ -15,9 +15,14 @@ about:
 
 I'm an engineering student at Harvey Mudd College. I like working where hardware and software meet: designing digital logic, figuring out how processors work, and writing the low-level code that brings a board to life.
 
-[![Die-shot style render of a RISC-V RV32IM 5-stage pipelined processor with labeled blocks: IFU, branch predictor, CSR, decode, register file, ALU, multiplier, hazard unit, and LSU.](images/riscv-core-die.svg)](projects/soc-final/soc-final.qmd)
+```{=html}
+<div style="position:relative;width:100%;height:clamp(420px,60vw,560px);border-radius:18px;overflow:hidden;background:#050507;margin:1.5rem 0 0.5rem">
+  <iframe src="projects/soc-final/chip3d/index.html" title="Interactive 3D model of my RV32IM processor die" loading="lazy" allowfullscreen
+          style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>
+</div>
+```
 
-*A stylized render of the 5-stage RV32IM core my partner and I built, with each block mapped to a module in our RTL. [Read the writeup →](projects/soc-final/soc-final.qmd)*
+*The 5-stage RV32IM processor my partner and I built, placed and routed on SkyWater SKY130 and rendered from its real layout. Drag to rotate, or switch to "Up close" to see the transistors. [Read the writeup →](projects/soc-final/soc-final.qmd)*
 
 ## What I Study
 
