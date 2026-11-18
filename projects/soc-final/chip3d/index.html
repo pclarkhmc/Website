@@ -47,6 +47,7 @@
     all: unset; cursor: pointer; padding: 8px 18px; border-radius: 999px;
     font-size: 14px; color: var(--muted); transition: background .25s, color .25s;
   }
+  .seg button[hidden] { display: none; }
   .seg button[aria-pressed="true"] { background: rgba(255, 255, 255, .92); color: #111; }
   .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   #explode {
@@ -118,6 +119,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 if (window.self !== window.top) document.body.classList.add('embedded');
+
+// ?views=die,modules limits which view buttons appear (default: all of them)
+const params = new URLSearchParams(location.search);
+const allowed = new Set((params.get('views') ?? 'die,modules,close').split(','));
+for (const [name, id] of [['die', 'btn-die'], ['modules', 'btn-mod'], ['close', 'btn-close']])
+  if (!allowed.has(name)) document.getElementById(id).hidden = true;
 
 const stage = document.getElementById('stage');
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -448,9 +455,9 @@ try {
   loading.style.opacity = 0;
   setTimeout(() => loading.remove(), 700);
   flyIn(2200);
-  const start = new URLSearchParams(location.search).get('view');
-  if (Object.hasOwn(VIEWS, start)) setView(start);
-  buildClose();   // warm the cutaway in the background; modules loads on demand
+  const start = params.get('view');
+  if (Object.hasOwn(VIEWS, start) && allowed.has(start)) setView(start);
+  if (allowed.has('close')) buildClose();   // warm the cutaway in the background; modules loads on demand
 } catch (err) {
   document.getElementById('loading').textContent = 'Could not load the die textures.';
   console.error(err);
