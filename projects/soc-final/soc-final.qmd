@@ -318,6 +318,10 @@ At the smallest scale (@fig-die-transistors), the individual transistors are vis
 
 ![A 12 × 7 µm region down to metal 1. Each orange line crossing green diffusion is a single transistor.](images/DieZoomTransistors.jpg){#fig-die-transistors}
 
+The run above synthesizes the design flat: Yosys dissolves every module boundary so it can optimize across them, and afterward nothing in the layout records which cells implement the multiplier and which implement the register file. To see where each block lands, I ran the flow a second time with hierarchical synthesis, which keeps every module intact, and colored each cell by the module it came from (@fig-die-modules, and the "Modules" button in the 3D viewer at the top of the page). The placer was given no floorplan constraints, so these regions come entirely from connectivity. The multiplier and register file are about 60% of the logic, and they settle into the bottom and top of the die. The ALU sits in the middle between them, surrounded by the forwarding muxes and pipeline registers that feed it. Keeping the boundaries costs area, since logic can't be shared or simplified across modules, so Yosys produced 13,038 cells instead of the flat run's 10,580.
+
+![The same processor placed and routed with its module hierarchy preserved, with each standard cell colored by its RTL module. Red: multiplier. Blue: register file. Orange: ALU and branch comparator. Teal: execute-stage pipeline registers and forwarding. Purple: CSR counters. Green: fetch unit. Pink: load/store unit. Yellow: decoder. Gray: clock tree and buffers.](images/DieModules.jpg){#fig-die-modules}
+
 This layout is an illustration rather than a signoff-quality chip. I capped the detailed router early, so it still has unresolved spacing violations. Yosys also builds the multiplier from ripple-carry adders instead of the fast DesignWare components Design Compiler uses, so this netlist is much slower than our 3.02 ns result, and the tools aren't sizing cells against the same timing target. The timing and area numbers in this report come from Design Compiler.
 
 ## Future Improvements

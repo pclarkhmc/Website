@@ -56,12 +56,13 @@
   #explode.show { opacity: 1; visibility: visible; }
   input[type="range"] { accent-color: var(--accent); width: min(220px, 50vw); }
   .hint { font-size: 12px; color: var(--dim); }
-  #legend {
+  #legend, #mlegend {
     right: 18px; top: 50%; transform: translateY(-50%);
     display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted);
     opacity: 0; transition: opacity .4s;
   }
-  #legend.show { opacity: 1; }
+  #legend.show, #mlegend.show { opacity: 1; }
+  #mlegend .pct { color: var(--dim); margin-left: 6px; }
   .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
   #loading { inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; transition: opacity .6s; }
   #fs { pointer-events: auto; position: absolute; top: 12px; right: 12px; font-size: 12px; color: var(--dim); text-decoration: none; display: none; }
@@ -75,7 +76,7 @@
   .embedded #controls { bottom: 12px; gap: 8px; }
   .embedded .hint { display: none; }
   .embedded .seg button { padding: 6px 16px; font-size: 13px; }
-  @media (max-width: 700px) { #legend { display: none; } }
+  @media (max-width: 700px) { #legend, #mlegend { display: none; } }
 </style>
 </head>
 <body>
@@ -90,10 +91,12 @@
 </div>
 
 <div class="hud" id="legend"></div>
+<div class="hud" id="mlegend"></div>
 
 <div class="hud" id="controls">
   <div class="seg" role="group" aria-label="View">
     <button id="btn-die" aria-pressed="true">Die</button>
+    <button id="btn-mod" aria-pressed="false">Modules</button>
     <button id="btn-close" aria-pressed="false">Up close</button>
   </div>
   <label id="explode">Stack <input id="explode-range" type="range" min="0" max="1" step="0.001" value="0"> Exploded</label>
@@ -199,6 +202,43 @@ async function buildDie() {
   dieScene.add(top, body, shadow);
 }
 
+// ---------- Modules: a second place-and-route run with hierarchy kept, every cell tinted by its RTL module ----------
+const modScene = new THREE.Scene();
+const modLights = addLights(modScene, 8);
+let modBuilt = null;
+
+function buildModules() {
+  modBuilt ??= (async () => {
+    const [map, groups] = await Promise.all([
+      new THREE.TextureLoader().loadAsync('modules.jpg'),
+      fetch('modules.json').then((r) => r.json()),
+    ]);
+    map.colorSpace = THREE.SRGBColorSpace;
+    map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const top = new THREE.Mesh(new THREE.PlaneGeometry(DIE, DIE), new THREE.MeshPhysicalMaterial({
+      map, roughness: 0.55, metalness: 0.15, envMapIntensity: 0.4, clearcoat: 0.35, clearcoatRoughness: 0.12,
+      polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    }));
+    top.rotation.x = -Math.PI / 2;
+    top.position.y = 0.002;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(DIE, THICK, DIE),
+      new THREE.MeshPhysicalMaterial({ color: 0x2b2e36, metalness: 0.55, roughness: 0.3, clearcoat: 0.6 }));
+    body.position.y = -THICK / 2;
+    const shadow = contactShadow(DIE * 1.9);
+    shadow.position.y = -THICK - 0.02;
+    modScene.add(top, body, shadow);
+
+    const legend = document.getElementById('mlegend');
+    legend.innerHTML = '<div class="pct" style="margin:0 0 2px">Share of cell area</div>';
+    for (const g of groups) {
+      const row = document.createElement('div');
+      row.innerHTML = `<span class="sw" style="background:${g.color}"></span>${g.label}<span class="pct">${g.pct}%</span>`;
+      legend.appendChild(row);
+    }
+  })();
+  return modBuilt;
+}
+
 // ---------- Up close: an 18 x 16 um patch extruded with the real SKY130 layer heights ----------
 const closeScene = new THREE.Scene();
 const closeLights = addLights(closeScene, 30);
@@ -278,6 +318,12 @@ const VIEWS = {
     sphere: () => ({ center: new THREE.Vector3(0, -THICK / 2, 0), radius: Math.hypot(DIE / 2, DIE / 2, THICK / 2) }),
     sub: '526 × 526 µm die · 10,580 standard cells · placed and routed with OpenROAD',
   },
+  modules: {
+    scene: modScene, lights: modLights, dir: new THREE.Vector3(0.6, 9.6, 2.6).normalize(),
+    near: 0.05, far: 100, min: 1.2,
+    sphere: () => ({ center: new THREE.Vector3(0, -THICK / 2, 0), radius: Math.hypot(DIE / 2, DIE / 2, THICK / 2) }),
+    sub: 'Hierarchy kept · 13,210 cells colored by the RTL module they came from',
+  },
   close: {
     scene: closeScene, lights: closeLights, dir: new THREE.Vector3(24, 19, 31).normalize(),
     near: 0.2, far: 600, min: 4,
@@ -341,16 +387,20 @@ async function setView(name) {
   const next = VIEWS[name];
   if (next === view) return;
   if (name === 'close') await buildClose();
+  if (name === 'modules') await buildModules();
   view = next;
   camera.near = next.near; camera.far = next.far;
   document.getElementById('btn-die').setAttribute('aria-pressed', name === 'die');
+  document.getElementById('btn-mod').setAttribute('aria-pressed', name === 'modules');
   document.getElementById('btn-close').setAttribute('aria-pressed', name === 'close');
+  document.getElementById('mlegend').classList.toggle('show', name === 'modules');
   document.getElementById('explode').classList.toggle('show', name === 'close');
   document.getElementById('legend').classList.toggle('show', name === 'close');
   document.getElementById('sub').textContent = next.sub;
   flyIn(1400);
 }
 document.getElementById('btn-die').addEventListener('click', () => setView('die'));
+document.getElementById('btn-mod').addEventListener('click', () => setView('modules'));
 document.getElementById('btn-close').addEventListener('click', () => setView('close'));
 
 document.getElementById('explode-range').addEventListener('input', (e) => {
@@ -398,8 +448,9 @@ try {
   loading.style.opacity = 0;
   setTimeout(() => loading.remove(), 700);
   flyIn(2200);
-  if (new URLSearchParams(location.search).get('view') === 'close') setView('close');
-  else buildClose();   // warm the cutaway in the background
+  const start = new URLSearchParams(location.search).get('view');
+  if (Object.hasOwn(VIEWS, start)) setView(start);
+  buildClose();   // warm the cutaway in the background; modules loads on demand
 } catch (err) {
   document.getElementById('loading').textContent = 'Could not load the die textures.';
   console.error(err);
