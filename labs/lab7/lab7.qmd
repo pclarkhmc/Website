@@ -30,7 +30,7 @@ SubBytes swaps each byte for its S-box value. I feed the bytes through one S-box
 
 ![SubBytes applies the S-box to each byte of the state.](images/Subbyte.png){#fig-subbyte}
 
-Due to a misunderstanding, I thought the iCE40 only had 4 EBRs. It actually has 30 EBRs and 4 SRAMs. This made it substantially harder to work around because I had to feed in bytes sequentially to the S-box. It is also MUCH slower, but still faster than doing it on the MCU.
+Due to a misunderstanding, I thought the iCE40 only had 4 EBRs. It actually has 30 EBRs and 4 SPRAMs. This made it substantially harder to work around because I had to feed in bytes sequentially to the S-box. It is also MUCH slower, but still faster than doing it on the MCU.
 
 ![SubBytes module.](images/subbyte_block.png){#fig-subbyte-block}
 
@@ -49,7 +49,7 @@ Each round key is built from the last one using RotWord, SubWord, Rcon, and a ch
 
 ![Key expansion module in hardware.](images/keyexpansion_block.png){#fig-keyexpansion-block}
 
-Keys are computed one round at a time, so only one is stored. The S-box lives in an EBR, which adds a cycle per lookup. The controller loads the key in round 0, then enable the key flip flop to store it when the round changes.
+Keys are computed one round at a time, so only one is stored. The S-box lives in an EBR, which adds a cycle per lookup. The controller loads the key in round 0, then enables the key flip flop to store it when the round changes.
 
 ### Implementing AES Algorithm
 
@@ -315,5 +315,5 @@ Code and full AI responses are in `E155-Labs/lab07/AI_Prototype`.
 
 ### Reflection
 
-The syntax the LLM's use is complex and full of bloated comment. I would rate the output quality high however since it did a nice job of using parameters to make a unrolled version of the algorithm. I'm not that familiar with generate blocks, but it was fairly readable because of the clear variable names that related to the spec.
+The syntax the LLMs use is complex and full of bloated comments. I would rate the output quality high however since it did a nice job of using parameters to make an unrolled version of the algorithm. I'm not that familiar with generate blocks, but it was fairly readable because of the clear variable names that related to the spec.
 If I were to implement AI into my workflow, I would have it making tests primarily, because I think I can efficiently allocate resources for my board based on my knowledge of the FPGA.
