@@ -1,47 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://pclarkhmc.github.io/Website/projects/soc-final/soc-final.html</loc>
-    <lastmod>2026-10-23T23:28:12.568Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pclarkhmc.github.io/Website/blog.html</loc>
-    <lastmod>2026-10-23T23:28:12.477Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pclarkhmc.github.io/Website/index.html</loc>
-    <lastmod>2026-10-23T23:28:12.478Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pclarkhmc.github.io/Website/labs/lab6/lab6.html</loc>
-    <lastmod>2026-10-23T23:28:12.500Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pclarkhmc.github.io/Website/labs/lab1/lab1.html</loc>
-    <lastmod>2026-10-23T23:28:12.481Z</lastmod>
-  </url>
-  <url>
-    <loc>https://pclarkhmc.github.io/Website/projects.html</loc>
-    <lastmod>2026-10-23T23:28:12.500Z</lastmod>
-  </url>
-  <url>
     <loc>https://pclarkhmc.github.io/Website/labs/lab4/lab4.html</loc>
-    <lastmod>2026-10-23T23:28:12.489Z</lastmod>
+    <lastmod>2026-11-18T03:50:25.031Z</lastmod>
   </url>
   <url>
     <loc>https://pclarkhmc.github.io/Website/labs/lab3/lab3.html</loc>
-    <lastmod>2026-10-23T23:28:12.488Z</lastmod>
+    <lastmod>2026-11-18T03:50:25.029Z</lastmod>
   </url>
   <url>
     <loc>https://pclarkhmc.github.io/Website/labs/lab2/lab2.html</loc>
-    <lastmod>2026-10-23T23:28:12.484Z</lastmod>
+    <lastmod>2026-11-18T03:50:25.026Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/index.html</loc>
+    <lastmod>2026-11-18T03:50:25.021Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/projects.html</loc>
+    <lastmod>2026-11-18T03:50:25.047Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/projects/soc-final/soc-final.html</loc>
+    <lastmod>2026-11-18T03:50:25.114Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/blog.html</loc>
+    <lastmod>2026-11-18T03:50:25.020Z</lastmod>
   </url>
   <url>
     <loc>https://pclarkhmc.github.io/Website/posts/sdtrig-certification-tests.html</loc>
-    <lastmod>2026-10-23T23:28:12.500Z</lastmod>
+    <lastmod>2026-11-18T03:50:25.047Z</lastmod>
   </url>
   <url>
     <loc>https://pclarkhmc.github.io/Website/labs.html</loc>
-    <lastmod>2026-10-23T23:28:12.478Z</lastmod>
+    <lastmod>2026-11-18T03:50:25.021Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/labs/lab1/lab1.html</loc>
+    <lastmod>2026-11-18T03:50:25.024Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/labs/lab6/lab6.html</loc>
+    <lastmod>2026-11-18T03:50:25.041Z</lastmod>
+  </url>
+  <url>
+    <loc>https://pclarkhmc.github.io/Website/labs/lab7/lab7.html</loc>
+    <lastmod>2026-11-18T03:50:25.047Z</lastmod>
   </url>
 </urlset>
