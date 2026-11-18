@@ -1,0 +1,63 @@
+<mxfile host="drawio">
+  <diagram id="kec-fsm2" name="keyexpansion_controller FSM (2 state)">
+    <mxGraphModel dx="800" dy="600" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="700" pageHeight="450" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- states -->
+        <mxCell id="expand" value="&lt;b&gt;WAIT&lt;/b&gt;&lt;br&gt;key_ready = 0" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="100" y="140" width="150" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="ready" value="&lt;b&gt;READY&lt;/b&gt;&lt;br&gt;key_ready = 1&lt;br&gt;key_out &amp;lt;= new_key" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="460" y="140" width="150" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- reset -->
+        <mxCell id="reset" value="reset" style="endArrow=classic;html=1;strokeColor=#000000;fontColor=#000000;fontSize=12;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=none;" edge="1" parent="1" target="expand">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="30" y="215" as="sourcePoint"/>
+            <mxPoint x="100" y="215" as="targetPoint"/>
+            <mxPoint x="0" y="-12" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- EXPAND self loop -->
+        <mxCell id="expand_self" value="start | !done" style="curved=1;endArrow=classic;html=1;strokeColor=#000000;fontColor=#000000;fontSize=12;exitX=0.25;exitY=0.067;exitDx=0;exitDy=0;entryX=0.75;entryY=0.067;entryDx=0;entryDy=0;labelBackgroundColor=none;" edge="1" parent="1" source="expand" target="expand">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="118" y="72"/>
+              <mxPoint x="232" y="72"/>
+            </Array>
+            <mxPoint x="0" y="-14" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- READY self loop -->
+        <mxCell id="ready_self" value="!start&lt;br&gt;round == 0 / key_out &amp;lt;= key_in" style="curved=1;endArrow=classic;html=1;strokeColor=#000000;fontColor=#000000;fontSize=12;exitX=0.25;exitY=0.067;exitDx=0;exitDy=0;entryX=0.75;entryY=0.067;entryDx=0;entryDy=0;labelBackgroundColor=none;" edge="1" parent="1" source="ready" target="ready">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="478" y="72"/>
+              <mxPoint x="592" y="72"/>
+            </Array>
+            <mxPoint x="0" y="-22" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- EXPAND -> READY -->
+        <mxCell id="expand_ready" value="round == 0 / key_out &amp;lt;= key_in&lt;br&gt;done" style="endArrow=classic;html=1;strokeColor=#000000;fontColor=#000000;fontSize=12;exitX=0.975;exitY=0.35;exitDx=0;exitDy=0;entryX=0.025;entryY=0.35;entryDx=0;entryDy=0;labelBackgroundColor=none;" edge="1" parent="1" source="expand" target="ready">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="-20" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- READY -> EXPAND -->
+        <mxCell id="ready_expand" value="start" style="endArrow=classic;html=1;strokeColor=#000000;fontColor=#000000;fontSize=12;exitX=0.025;exitY=0.65;exitDx=0;exitDy=0;entryX=0.975;entryY=0.65;entryDx=0;entryDy=0;labelBackgroundColor=none;" edge="1" parent="1" source="ready" target="expand">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="0" y="12" as="offset"/>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
