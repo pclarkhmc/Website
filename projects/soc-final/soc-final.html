@@ -755,6 +755,17 @@ Figure&nbsp;13: A 12 × 7 µm region down to metal 1. Each orange line crossing 
 </figcaption>
 </figure>
 </div>
+<p>The run above synthesizes the design flat: Yosys dissolves every module boundary so it can optimize across them, and afterward nothing in the layout records which cells implement the multiplier and which implement the register file. To see where each block lands, I ran the flow a second time with hierarchical synthesis, which keeps every module intact, and colored each cell by the module it came from (<a href="#fig-die-modules" class="quarto-xref">Figure&nbsp;14</a>, and the “Modules” button in the 3D viewer at the top of the page). The placer was given no floorplan constraints, so these regions come entirely from connectivity. The multiplier and register file are about 60% of the logic, and they settle into the bottom and top of the die. The ALU sits in the middle between them, surrounded by the forwarding muxes and pipeline registers that feed it. Keeping the boundaries costs area, since logic can’t be shared or simplified across modules, so Yosys produced 13,038 cells instead of the flat run’s 10,580.</p>
+<div id="fig-die-modules" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-die-modules-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="images/DieModules.jpg" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-die-modules-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14: The same processor placed and routed with its module hierarchy preserved, with each standard cell colored by its RTL module. Red: multiplier. Blue: register file. Orange: ALU and branch comparator. Teal: execute-stage pipeline registers and forwarding. Purple: CSR counters. Green: fetch unit. Pink: load/store unit. Yellow: decoder. Gray: clock tree and buffers.
+</figcaption>
+</figure>
+</div>
 <p>This layout is an illustration rather than a signoff-quality chip. I capped the detailed router early, so it still has unresolved spacing violations. Yosys also builds the multiplier from ripple-carry adders instead of the fast DesignWare components Design Compiler uses, so this netlist is much slower than our 3.02 ns result, and the tools aren’t sizing cells against the same timing target. The timing and area numbers in this report come from Design Compiler.</p>
 </section>
 <section id="future-improvements" class="level2">
@@ -765,11 +776,11 @@ Figure&nbsp;13: A 12 × 7 µm region down to metal 1. Each orange line crossing 
 <img src="images/SixStageBlockDiagram.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-six-stage-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;14: Planned 6-stage pipeline with the Execute stage split in two (not implemented).
+Figure&nbsp;15: Planned 6-stage pipeline with the Execute stage split in two (not implemented).
 </figcaption>
 </figure>
 </div>
-<p>Our next step would be to split the Execute stage in two (<a href="#fig-six-stage" class="quarto-xref">Figure&nbsp;14</a>). The ALU source-select muxes would sit in the first half, since their inputs arrive from across the processor, which would shorten the critical path and let the multiplier pipeline without stalling.</p>
+<p>Our next step would be to split the Execute stage in two (<a href="#fig-six-stage" class="quarto-xref">Figure&nbsp;15</a>). The ALU source-select muxes would sit in the first half, since their inputs arrive from across the processor, which would shorten the critical path and let the multiplier pipeline without stalling.</p>
 <p>That second change matters. In an earlier lab, we found that CoreMark executes 173,933 multiplies. Because the processor currently stalls on every multiply, each one adds stall cycles. That costs about 5% of performance compared to the 3,248,907 total cycles we measured without the multi-cycle multiplier.</p>
 </section>
 <section id="reflection" class="level2">

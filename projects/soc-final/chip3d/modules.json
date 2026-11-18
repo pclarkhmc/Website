@@ -1,0 +1,52 @@
+[
+ {
+  "label": "Multiplier",
+  "color": "#e15759",
+  "pct": 32.3
+ },
+ {
+  "label": "Register file",
+  "color": "#4e79a7",
+  "pct": 30.4
+ },
+ {
+  "label": "ALU & branch compare",
+  "color": "#f28e2b",
+  "pct": 7.0
+ },
+ {
+  "label": "CSR counters",
+  "color": "#b07aa1",
+  "pct": 4.3
+ },
+ {
+  "label": "Decoder & control",
+  "color": "#edc948",
+  "pct": 0.5
+ },
+ {
+  "label": "Execute pipeline & forwarding",
+  "color": "#76b7b2",
+  "pct": 9.5
+ },
+ {
+  "label": "Fetch (IFU)",
+  "color": "#59a14f",
+  "pct": 4.9
+ },
+ {
+  "label": "Load/store (LSU)",
+  "color": "#ff9da7",
+  "pct": 4.6
+ },
+ {
+  "label": "Hazard unit",
+  "color": "#9c755f",
+  "pct": 0.3
+ },
+ {
+  "label": "Clock tree & buffers",
+  "color": "#bab0ac",
+  "pct": 6.1
+ }
+]
